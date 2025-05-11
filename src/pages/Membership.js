@@ -15,7 +15,7 @@ const MembershipManager = () => {
   const [members, setMembers] = useState([]);
   const [filterMemberInfo, setFilterMemberInfo] = useState([]);
   const [memberName, setMemberName] = useState('');
-  const [memberBalance, setMemberBalance] = useState(0);
+  // const [memberBalance, setMemberBalance] = useState(0);
   const [memberPhone, setMemberPhone] = useState();
   const [chargeRecord, setChargeRecord] = useState();
   const [consumeRecord, setConsumeRecord] = useState(0);
@@ -85,6 +85,30 @@ const MembershipManager = () => {
       // Handle form submission, e.g., send data to an API
     };
 
+  const fetchMemberBalance = async (memberId) => {
+    try {
+          const balance_resp = await axios.get(`${membershipUrl}/on_balance`, 
+            {
+              params: {
+                "member_id": memberId,
+              },
+            },
+            {
+              headers: header
+            },
+          cors
+          );
+          console.log("balance", balance_resp.data.data);
+          if (balance_resp.status !== 200) {
+            message.error('查询余额失败');
+            }
+          return balance_resp.data.data;
+    } catch (error) {
+      message.error(error);
+      message.error('查询余额时发生错误');
+    }
+  };
+  
   const checkMember = async () => {
     console.log("memberName", memberName);
     if (!memberName || memberName.trim() === '') {
@@ -106,25 +130,8 @@ const MembershipManager = () => {
         } else {
           message.info('会员已存在');
 
-          // 
-          // const balance_resp = await axios.get("http://localhost:8100/membership/on_balance", 
-          const balance_resp = await axios.get(`${membershipUrl}/on_balance`, 
-            {
-              params: {
-                "member_id": members[index].member_id,
-              },
-            },
-            {
-              headers: header
-            },
-          cors
-          );
-          console.log("balance", balance_resp.data.data);
-          if (balance_resp.status !== 200) {
-            message.error('查询余额失败');
-            }
-          setMemberBalance(balance_resp.data.data);
-          const filteredData = { ...members[index], "balance": balance_resp.data.data};
+          const balance = await fetchMemberBalance(members[index].member_id);
+          const filteredData = { ...members[index], "balance": balance};
           setFilterMemberInfo([filteredData]);
           console.log("fileredData ", [filteredData]);
       };
@@ -188,6 +195,7 @@ const MembershipManager = () => {
 
     console.log("members ", members);
     console.log("form phone", formValues.phone);
+
     const index = members.findIndex(member =>
       parseInt(member.phone) === parseInt(formValues.phone));
     if (index === -1) {
@@ -198,19 +206,22 @@ const MembershipManager = () => {
       message.error("充值和消费金额不能同时为负");
     }
 
+    const balance = await fetchMemberBalance(members[index].member_id);
+    const newBalance = balance + parseInt(formValues.charge) - parseInt(formValues.consume)
+
     try {
-      // if (parseInt(formValues.consume) > (balance_resp.data.data + parseInt(formValues.charge))) {
-      if (parseInt(formValues.consume) > (memberBalance + parseInt(formValues.charge))) {
+      // if (parseInt(formValues.consume) > (balance + parseInt(formValues.charge))) {
+      if (newBalance < 0) {
           message.error("消费金额余额不足");        
       } else {
-        // const consume_resp = await axios.post("http://localhost:8100/membership/on_consume", 
+        // const consume_resp = await axios.post("http://localhost:8100/membership/on_consume",
         const consume_resp = await axios.post(`${membershipUrl}/on_consume`, 
             {
               "member_id": members[index].member_id,
               "charge": parseInt(formValues.charge),
               "discount": parseInt(formValues.discount),
               "consume": parseInt(formValues.consume),
-              "balance": memberBalance
+              "balance": newBalance
             },
           {
             headers: header
