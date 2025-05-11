@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { LogoutButton } from '../components/auth';
+import { LogoutButton } from '../components/context';
 
 const Layout = () => (
   <div className="min-h-screen flex flex-col">

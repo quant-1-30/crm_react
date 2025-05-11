@@ -2,7 +2,7 @@ import React, {useState, useContext} from 'react';
 import { Upload, Button, message } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import axios from 'axios';
-import { AuthContext } from './auth';
+import { AuthContext } from './context';
   
 const cors = {withCredential: true};
 

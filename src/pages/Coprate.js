@@ -4,13 +4,15 @@ import { Input, Table, message, Button, Select } from 'antd';
 import axios from 'axios';
 import 'antd/dist/reset.css';
 import FileUploader from '../components/upload';
-import { AuthContext } from '../components/auth';
+import { AuthContext } from '../components/context';
 
 const { Option } = Select;
 
 const CoporateManager = () => {
 
   const { token } = useContext(AuthContext);
+  const { api_url } = useContext(AuthContext);
+  const coporateUrl = `${api_url}/coporate`;
 
   const header = {
     'Content-Type': 'application/json',
@@ -29,7 +31,8 @@ const CoporateManager = () => {
     const fetchUnits = async () => {
       setLoading(true);
       try {
-        const response = await axios.get('http://localhost:8100/coporate/list'
+        // const response = await axios.get('http://localhost:8100/coporate/list'
+        const response = await axios.get(`${coporateUrl}/list`
         );
         console.log("response ", response.data.data);
         setUnits(response.data.data);
@@ -46,7 +49,7 @@ const CoporateManager = () => {
       // setUnits([])
       console.log("Cleanup: Component will unmount");
     }
-  }, []);
+  }, [coporateUrl]);
 
   const handleChange = (value) => {
     setSelectedValue(value);
@@ -59,17 +62,21 @@ const CoporateManager = () => {
       //   unit.name.toLowerCase().includes(coporateName) 
       // );
       // setFilteredUnits(filteredData);
-
       const index = units.findIndex(unit =>
-        unit.name.toLowerCase().includes(coporateName));
+        // unit.name.toLowerCase().includes(coporateName));
+        // unit.name.includes(coporateName));
+        // unit.name.localeCompare(coporateName, 'zh-CN', { sensitivity: 'base' }) === 0);
+        new RegExp(coporateName, 'i').test(unit.name));
+      console.log("index ", index);
       if (index === -1) {
-        message.error("数据为空");
+        message.error("协议单位数据为空");
       } else{
         setFilteredUnits([units[index]]);
         console.log("handleSearch ", units[index]);
   
         try {
-          const response = await axios.get('http://localhost:8100/coporate/detail',
+          // const response = await axios.get('http://localhost:8100/coporate/detail',
+          const response = await axios.get(`${coporateUrl}/detail`,
             {
               params: {
                 name: units[index].name
@@ -83,7 +90,7 @@ const CoporateManager = () => {
             setFilteredInfoUnits(response.data.data)
             console.log("detail response ", response.data.data);
           } else{
-            message.error("数据为空");
+            message.error("协议单位价格数据为空");
           }
         } catch (error) {
           message.error('获取协议单位价格数据时发生错误');
@@ -96,6 +103,15 @@ const CoporateManager = () => {
   // upload
   const onUpload = (data) => {
     console.log("upload success ", data);
+  };
+
+  const processInput = (value) => {
+    // Remove leading and trailing spaces
+    let processed = value.trim();
+    
+    // Remove special characters if needed
+    // processed = processed.replace(/['"]/g, ''); // Remove quotes if you don't want them
+    return processed;
   };
 
   const coporate_columns = [
@@ -140,7 +156,8 @@ const CoporateManager = () => {
       <Input 
         placeholder="搜索协议单位"
         // onMouseEnter={setUnits}
-        onChange={(e) => setCoporateName(e.target.value)}
+        // onChange={(e) => setCoporateName(e.target.value)}
+        onChange={(e) => setCoporateName(processInput(e.target.value))}
         style={ {marginBottom: 20, width: 300 }}
       />
       <Button type="primary" onClick={handleSearch}>查询</Button>
@@ -179,7 +196,8 @@ const CoporateManager = () => {
       </Select>
 
       <FileUploader
-        uploadUrl="http://localhost:8100/component/upload"
+        // uploadUrl="http://localhost:8100/component/upload"
+        uploadUrl={`${api_url}/component/upload`}
         table={selectedValue}
         onUploadSuccess={onUpload}
       />

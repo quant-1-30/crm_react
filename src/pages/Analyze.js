@@ -4,7 +4,7 @@ import { message, DatePicker, Select, Button} from 'antd';
 import { Histogram } from '../components/chart';
 import 'antd/dist/reset.css';
 // import DatePicker from 'react-datepicker';
-import { AuthContext } from '../components/auth';
+import { AuthContext } from '../components/context';
 
 
 
@@ -15,6 +15,8 @@ const { Option } = Select;
 
 const DisplayPieChart = () => {
   const { token } = useContext(AuthContext);
+  const { api_url } = useContext(AuthContext);
+  const statsUrl = `${api_url}/stats`;
 
   const header = {
     'Content-Type': 'application/json',
@@ -35,7 +37,8 @@ const DisplayPieChart = () => {
     console.log("freq", selectedValue);
     // setLoading(true);
     try {
-      const response = await axios.post('http://localhost:8100/stats/aggregate',
+      // const response = await axios.post('http://localhost:8100/stats/aggregate',
+      const response = await axios.post(`${statsUrl}/aggregate`,
         {
           start_date: Math.floor(startDate.valueOf() / 1000),
           end_date: Math.floor(endDate.valueOf() / 1000),

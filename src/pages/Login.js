@@ -1,12 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Form, Input, Button, Checkbox, message, Tabs} from 'antd';
 import { useNavigate } from 'react-router-dom';
 import 'antd/dist/reset.css';
 import axios from 'axios';
-import { useAuth } from '../components/auth';
+import { AuthContext } from '../components/context';
 
 const LoginPage = () => {
-  const { login } = useAuth();
+
+  // const { login } = useAuth();
+  const { login } = useContext(AuthContext);
+  const { api_url } = useContext(AuthContext);
+
+  const smsUrl = `${api_url}/component`;
+  const homeUrl = `${api_url}/home`;
 
   const [activeTab, setActiveTab] = useState('login');
   const [isSendingCode, setIsSendingCode] = useState(false);
@@ -17,7 +23,8 @@ const LoginPage = () => {
     console.log('Success:', values);
     // backend
     try {
-        const response = await axios.post("http://localhost:8100/home/on_login", {
+        // const response = await axios.post("http://localhost:8100/home/on_login", {
+        const response = await axios.post(`${homeUrl}/on_login`, {
             name: values.username,
             passwd: values.password,
         });
@@ -54,7 +61,8 @@ const LoginPage = () => {
     setIsSendingCode(true);
     // debugger;
     try {
-        const response = await axios.post("http://localhost:8100/component/on_sms",
+        // const response = await axios.post("http://localhost:8100/component/on_sms",
+        const response = await axios.post(`${smsUrl}/on_sms`,
             {"phone": phone}
         );
         console.log("send sms ", response)
@@ -73,7 +81,8 @@ const LoginPage = () => {
 
   const onRegister = async (values) => {
     try {
-        const response = await axios.post("http://localhost:8100/home/on_register",
+        // const response = await axios.post("http://localhost:8100/home/on_register",
+        const response = await axios.post(`${homeUrl}/on_register`,
             {name: values.username,
              passwd: values.password,
              phone: values.phone,
@@ -94,7 +103,8 @@ const LoginPage = () => {
   
   const onReset = async (values) => {
     try {
-        const response = await axios.post("http://localhost:8100/home/on_reset",
+        // const response = await axios.post("http://localhost:8100/home/on_reset",
+        const response = await axios.post(`${homeUrl}/on_reset`,
             {
              passwd: values.password,
              phone: values.phone,

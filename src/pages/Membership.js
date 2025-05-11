@@ -4,7 +4,7 @@ import { Input, Button, message, Modal, Form, Tabs, Table} from 'antd';
 import axios from 'axios';
 import 'antd/dist/reset.css';
 import FileUploader from '../components/upload';
-import { AuthContext } from '../components/auth';
+import { AuthContext } from '../components/context';
 
 
 const MembershipManager = () => {
@@ -28,7 +28,9 @@ const MembershipManager = () => {
 
   // const token = localStorage.getItem('token')
   const { token} = useContext(AuthContext);
-
+  const { api_url } = useContext(AuthContext);
+  const membershipUrl = `${api_url}/membership`;
+  
   const header = {
     'Content-Type': 'application/json',
     'Authorization':  `Bearer ${token}`
@@ -59,7 +61,8 @@ const MembershipManager = () => {
   const fetchUnits = async () => {
       setLoading(true);
       try {
-        const response = await axios.get('http://localhost:8100/membership/list',
+        // const response = await axios.get('http://localhost:8100/membership/list',
+        const response = await axios.get(`${membershipUrl}/list`,
           // {
           //   headers: header
           // },
@@ -104,7 +107,8 @@ const MembershipManager = () => {
           message.info('会员已存在');
 
           // 
-          const balance_resp = await axios.get("http://localhost:8100/membership/on_balance", 
+          // const balance_resp = await axios.get("http://localhost:8100/membership/on_balance", 
+          const balance_resp = await axios.get(`${membershipUrl}/on_balance`, 
             {
               params: {
                 "member_id": members[index].member_id,
@@ -142,7 +146,8 @@ const MembershipManager = () => {
     console.log("member_name ", memberName);
     try {
       // 创建新会员
-      const createResponse = await axios.post('http://localhost:8100/membership/on_register', 
+      // const createResponse = await axios.post('http://localhost:8100/membership/on_register', 
+      const createResponse = await axios.post(`${membershipUrl}/on_register`, 
       {
         //name: memberName,
         name: formValues.member_name,
@@ -198,7 +203,8 @@ const MembershipManager = () => {
       if (parseInt(formValues.consume) > (memberBalance + parseInt(formValues.charge))) {
           message.error("消费金额余额不足");        
       } else {
-        const consume_resp = await axios.post("http://localhost:8100/membership/on_consume", 
+        // const consume_resp = await axios.post("http://localhost:8100/membership/on_consume", 
+        const consume_resp = await axios.post(`${membershipUrl}/on_consume`, 
             {
               "member_id": members[index].member_id,
               "charge": parseInt(formValues.charge),
@@ -233,7 +239,8 @@ const MembershipManager = () => {
         console.log("ConsumeSearch index ", index);
         if (index !== -1){
           
-          const charge_resp = await axios.get('http://localhost:8100/membership/charge_detail',
+          // const charge_resp = await axios.get('http://localhost:8100/membership/charge_detail',
+          const charge_resp = await axios.get(`${membershipUrl}/charge_detail`,
             { 
               params: {
                 member_id: members[index].member_id
@@ -247,7 +254,8 @@ const MembershipManager = () => {
           const charge_records = charge_resp.data.data;
           setChargeRecord(charge_records);
 
-          const consume_resp = await axios.get('http://localhost:8100/membership/consume_detail',
+          // const consume_resp = await axios.get('http://localhost:8100/membership/consume_detail',
+          const consume_resp = await axios.get(`${membershipUrl}/consume_detail`,
             { 
               params: {
                 member_id: members[index].member_id
@@ -369,12 +377,12 @@ const MembershipManager = () => {
 
   useEffect(() => {
    fetchUnits();
+   setUpdateSuccess(false); // Reset after fetching
 
    return () => {
      console.log("Cleanup: Component will unmount");
    }
   }, [updateSuccess]);
-  // }, []);
 
   const items= [
     {

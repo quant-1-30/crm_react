@@ -7,6 +7,8 @@ export const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
+  const api_url = process.env.REACT_APP_API_URL;
+
   const [token, setToken] = useState(() => {
     // Initialize from localStorage or null
     const stored = localStorage.getItem('token');
@@ -36,25 +38,25 @@ export const AuthProvider = ({ children }) => {
   
 
   return (
-    <AuthContext.Provider value={{ token, login, logout }}>
+    <AuthContext.Provider value={{ api_url, token, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// 2. Custom hook for consuming auth context
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
-};
+// // 2. Custom hook for consuming auth context
+// export const useAuth = () => {
+//   const context = useContext(AuthContext);
+//   if (!context) {
+//     throw new Error('useAuth must be used within AuthProvider');
+//   }
+//   return context;
+// };
 
 // 3. Logout Button Component
-
 export const LogoutButton = () => {
-  const { logout } = useAuth();
+  // const { logout } = useAuth();
+  const { logout } = useContext(AuthContext);
   return (
     <button
       onClick={logout}
@@ -67,7 +69,8 @@ export const LogoutButton = () => {
 
 // 4. ProtectedRoute Component
 export const ProtectedRoute = ({ children }) => {
-  const { token } = useAuth();
+  // const { token } = useAuth();
+  const { token } = useContext(AuthContext);
   if (!token) {
     return <Navigate to="/login" replace />;
   }

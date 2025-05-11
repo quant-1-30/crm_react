@@ -9,7 +9,7 @@ import LoginPage from "./pages/Login";
 import DashboardPage from "./pages/Dashboard";
 import CoporateManager from "./pages/Coprate";
 import DisplayPieChart from "./pages/Analyze";
-import { ProtectedRoute, AuthProvider } from "./components/auth";
+import { ProtectedRoute, AuthProvider } from "./components/context";
 
 // const { Header, Content } = Layout;
 
