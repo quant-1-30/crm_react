@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useRef, useEffect } from 'react';
 import { Form, Input, Button, Checkbox, message, Tabs} from 'antd';
 import { useNavigate } from 'react-router-dom';
 import 'antd/dist/reset.css';
@@ -17,7 +17,29 @@ const LoginPage = () => {
   const [activeTab, setActiveTab] = useState('login');
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [form] = Form.useForm()
+
+  const [countdown, setCountdown] = useState(0);
+  const timerRef = useRef(null);
+
   const navigate = useNavigate();
+
+  // set 60s / 1000 ms = 1s
+  useEffect(() => {
+    // 当 countdown 从 1 开始，启动定时器
+    if (countdown > 0) {
+      timerRef.current = setInterval(() => {
+        setCountdown(sec => {
+          if (sec <= 1) {
+            clearInterval(timerRef.current);
+            return 0;
+          }
+          return sec - 1;
+        });
+      }, 1000);
+    }
+    // 清理
+    return () => clearInterval(timerRef.current);
+  }, [countdown]);
 
   const onFinish = async (values) => {
     console.log('Success:', values);
@@ -58,6 +80,7 @@ const LoginPage = () => {
   const OnSendVerifyCode = async () => {
     const phone = form.getFieldValue('phone');
     console.log("phone ", phone);
+    if (countdown > 0) return;                   // 安全防护：倒计时中不能再发
     setIsSendingCode(true);
     // debugger;
     try {
@@ -68,6 +91,7 @@ const LoginPage = () => {
         console.log("send sms ", response)
         if (response.status === 200) {
             message.success('验证码发送成功');
+            setCountdown(60);                         // ← 点击成功后启动 60s 倒计时
         } else {
             message.error("验证码发生错误");
         }
@@ -205,9 +229,9 @@ const LoginPage = () => {
              type='link'
             //  onClick={() => OnSendVerifyCode(Form.getFieldValue('phone'))}
              onClick={() => OnSendVerifyCode()}
-             disabled={isSendingCode}
-        >
-            获取验证码
+             disabled={isSendingCode || countdown > 0}  // 倒计时或发送中禁用
+             >
+               {countdown > 0 ? `${countdown}s后重试` : '获取验证码'}
         </Button>
         }/>
     </Form.Item>
@@ -246,11 +270,10 @@ const LoginPage = () => {
         <Input addonAfter={
             <Button
              type='link'
-            //  onClick={() => OnSendVerifyCode(Form.getFieldValue('phone'))}
              onClick={() => OnSendVerifyCode()}
-             disabled={isSendingCode}
-        >
-            获取验证码
+             disabled={isSendingCode || countdown > 0}  // 倒计时或发送中禁用
+             >
+               {countdown > 0 ? `${countdown}s后重试` : '获取验证码'}
         </Button>
         }/>
     </Form.Item>
