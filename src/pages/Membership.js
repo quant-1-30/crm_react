@@ -207,7 +207,7 @@ const MembershipManager = () => {
     }
 
     const balance = await fetchMemberBalance(members[index].member_id);
-    const newBalance = balance + parseInt(formValues.charge) - parseInt(formValues.consume)
+    const newBalance = balance + parseInt(formValues.charge) + parseInt(formValues.discount) - parseInt(formValues.consume)
 
     try {
       // if (parseInt(formValues.consume) > (balance + parseInt(formValues.charge))) {
