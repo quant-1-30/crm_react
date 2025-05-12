@@ -7,13 +7,15 @@ ENV REACT_APP_API_URL=$REACT_APP_API_URL
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy the rest of the application code into the container
 ## Copy package.json and package-lock.json (or yarn.lock) into the container
-COPY . .
+COPY  package.json package-lock.json ./
 
 # Install application dependencies
 # If you're using Yarn, you can use: RUN yarn install
 RUN npm install && npm run build
+
+# Copy the rest of the application code into the container
+COPY . .
 
 # ========== Stage 2: Serve with Nginx ==========
 FROM nginx:alpine
