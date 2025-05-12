@@ -172,9 +172,9 @@ const LoginPage = () => {
         onFinish={onRegister}
     >
       <Form.Item
-       label='用户名'
-       name='username'
-       rules={[{'requird': true, message: '请输入用户名'}]}
+        label="用户名"
+        name="username"
+        rules={[{ required: true, message: '请输入用户名!' }]}
     >
       <input />
     </Form.Item>
@@ -192,6 +192,14 @@ const LoginPage = () => {
      name='phone'
      rules={[{required: true, message: '请输入手机号码'}]}
      >
+        <Input />
+     </Form.Item>
+
+     <Form.Item
+      label='验证码'
+      name='verify_code'
+      rules={[{required: true, message: '请输入验证码'}]}
+    >
         <Input addonAfter={
             <Button
              type='link'
@@ -202,14 +210,6 @@ const LoginPage = () => {
             获取验证码
         </Button>
         }/>
-     </Form.Item>
-
-     <Form.Item
-      label='验证码'
-      name='verify_code'
-      rules={[{required: true, message: '请输入验证码'}]}
-    >
-        <Input />
     </Form.Item>
 
     <Form.Item>
@@ -230,19 +230,19 @@ const LoginPage = () => {
         onFinish={onReset}
     >
 
-     <Form.Item
-      label='重置密码'
-      name='password'
-      rules={[{required: true, message: '请输入密码'}]}
-    >
-        <Input.Password />
-    </Form.Item>
-    
     <Form.Item
      label='手机号码'
      name='phone'
      rules={[{required: true, message: '请输入手机号码'}]}
      >
+        <Input />
+     </Form.Item>
+
+     <Form.Item
+      label='验证码'
+      name='verify_code'
+      rules={[{required: true, message: '请输入验证码'}]}
+    >
         <Input addonAfter={
             <Button
              type='link'
@@ -253,14 +253,14 @@ const LoginPage = () => {
             获取验证码
         </Button>
         }/>
-     </Form.Item>
-
+    </Form.Item>
+     
      <Form.Item
-      label='验证码'
-      name='verify_code'
-      rules={[{required: true, message: '请输入验证码'}]}
+      label='重置密码'
+      name='password'
+      rules={[{required: true, message: '请输入密码'}]}
     >
-        <Input />
+        <Input.Password />
     </Form.Item>
 
     <Form.Item>
