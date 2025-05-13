@@ -46,7 +46,7 @@ const MembershipManager = () => {
   const { token} = useContext(AuthContext);
   const { api_url } = useContext(AuthContext);
   const membershipUrl = `${api_url}/membership`;
-  
+  const uploadUrl = `${api_url}/component/upload`;
   const header = {
     'Content-Type': 'application/json',
     'Authorization':  `Bearer ${token}`
@@ -734,7 +734,7 @@ const MembershipManager = () => {
       children: (
         <>
           <FileUploader
-            uploadUrl="http://localhost:8100/component/upload"
+            uploadUrl={uploadUrl}
             table="membership"
             onUploadSuccess={onUpload}
           />

@@ -6,9 +6,6 @@ import 'antd/dist/reset.css';
 // import DatePicker from 'react-datepicker';
 import { AuthContext } from '../components/context';
 
-
-
-
 const cors = {withCredential: true};
 
 const { Option } = Select;

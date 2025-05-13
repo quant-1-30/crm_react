@@ -5,6 +5,7 @@ import axios from 'axios';
 import 'antd/dist/reset.css';
 import FileUploader from '../components/upload';
 import { AuthContext } from '../components/context';
+// import { tr } from 'date-fns/locale';
 
 const { Option } = Select;
 
@@ -13,6 +14,7 @@ const CoporateManager = () => {
   const { token } = useContext(AuthContext);
   const { api_url } = useContext(AuthContext);
   const coporateUrl = `${api_url}/coporate`;
+  const uploadUrl = `${api_url}/component/upload`;
 
   const header = {
     'Content-Type': 'application/json',
@@ -26,6 +28,9 @@ const CoporateManager = () => {
   const [coporateName, setCoporateName]  = useState( []);
   const [selectedValue, setSelectedValue]  = useState( []);
   const [loading, setLoading] = useState(false);
+  
+  // flag for useEffect
+  const [updateSuccess, setUpdateSuccess] = useState(false);
 
   useEffect(() => {
     const fetchUnits = async () => {
@@ -34,22 +39,27 @@ const CoporateManager = () => {
         // const response = await axios.get('http://localhost:8100/coporate/list'
         const response = await axios.get(`${coporateUrl}/list`
         );
-        console.log("response ", response.data.data);
-        setUnits(response.data.data);
-        setFilteredUnits(response.data.data)
+        if (response.data.status === 0) {
+          console.log("response ", response.data.data);
+          setUnits(response.data.data);
+          setFilteredUnits(response.data.data)
+        } else{
+          message.error("协议单位数据为空");
+        }
       } catch (error) {
-        message.error('获取协议单位数据时发生错误');
+        message.error('获取协议数据时发生错误');
       } finally {
         setLoading(false);
       }
     };
 
     fetchUnits();
+    setUpdateSuccess(false);
     return () => {
       // setUnits([])
       console.log("Cleanup: Component will unmount");
     }
-  }, [coporateUrl]);
+  }, [updateSuccess]);
 
   const handleChange = (value) => {
     setSelectedValue(value);
@@ -57,11 +67,7 @@ const CoporateManager = () => {
 
   // input 
   const handleSearch = async () => {
-
-      // const filteredData = units.filter(unit =>
-      //   unit.name.toLowerCase().includes(coporateName) 
-      // );
-      // setFilteredUnits(filteredData);
+   
       const index = units.findIndex(unit =>
         // unit.name.toLowerCase().includes(coporateName));
         // unit.name.includes(coporateName));
@@ -103,6 +109,7 @@ const CoporateManager = () => {
   // upload
   const onUpload = (data) => {
     console.log("upload success ", data);
+    setUpdateSuccess(true)
   };
 
   const processInput = (value) => {
@@ -191,13 +198,13 @@ const CoporateManager = () => {
         onChange={handleChange}
         value={selectedValue}
       >
-        <Option value="coporate"></Option>
-        <Option value="coporate_info"></Option>
+        <Option value="协议单位"></Option>
+        <Option value="协议单位价格"></Option>
       </Select>
 
       <FileUploader
         // uploadUrl="http://localhost:8100/component/upload"
-        uploadUrl={`${api_url}/component/upload`}
+        uploadUrl={uploadUrl}
         table={selectedValue}
         onUploadSuccess={onUpload}
       />
