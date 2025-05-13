@@ -29,11 +29,18 @@ const MembershipManager = () => {
   const [memberInfo, setMemberInfo] = useState('');
   const [filterMemberInfo, setFilterMemberInfo] = useState([]);
   // chargeRecord
-  const [chargeRecord, setChargeRecord] = useState();
+  const [chargeRecord, setChargeRecord] = useState([]);
   // consumeRecord
-  const [consumeRecord, setConsumeRecord] = useState(0);
+  const [consumeRecord, setConsumeRecord] = useState([]);
   // uploadRecords
   const [uploadRecords, setUploadRecords] = useState([]);
+
+  // pagination
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 5,
+    total: 0
+  });
 
   // const token = localStorage.getItem('token')
   const { token} = useContext(AuthContext);
@@ -46,33 +53,6 @@ const MembershipManager = () => {
   };
 
   const cors = {withCredential: true};
-
-
-  const onFinish = async (values) => {
-    if (loading) {
-      return;
-    }
-    try {
-      setLoading(true);
-      // console.log("current", formref.current);
-      // if (!formref.current) {
-      //    formref.current.submit();
-      // }
-      message.success('表格提交成功 !');
-      // formref.current=null;
-    } catch (error) {
-      message.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  //  onsubmit and onFinish conflict   
-  // const handleSubmit = (e) => {
-  //     e.preventDefault(); // Prevent the default form submission behavior
-  //     console.log('Form data submitted:', form.getFieldsValue());
-  //     // Handle form submission, e.g., send data to an API
-  //   };
 
   const onFinishFailed = (errorInfo) => {
     console.log('Failed:', errorInfo);
@@ -88,10 +68,32 @@ const MembershipManager = () => {
     // message.error('Please check the form fields and try again.');
   };
 
+  // set pagination
+  const handlePageChange = (pagination, filters, sorter) => {
+    console.log("handlePageChange filters ", filters);
+    console.log("handlePageChange sorter ", sorter);
+ 
+    // // 处理排序
+    // let sortedData = [...chargeRecord]; // 创建数据副本
+    // if (sorter.field && sorter.order) {
+    //   sortedData.sort((a, b) => {
+    //     const field = sorter.field;
+    //     const order = sorter.order;
+        
+    //     if (order === 'ascend') {
+    //       return a[field] > b[field] ? 1 : -1;
+    //     } else {
+    //       return a[field] < b[field] ? 1 : -1;
+    //     }
+    setPagination({
+      ...pagination,
+      total: pagination.total
+    });
+  };
+
   const fetchUnits = async () => {
       setLoading(true);
       try {
-        // const response = await axios.get('http://localhost:8100/membership/list',
         const response = await axios.get(`${membershipUrl}/list`,
           {
             headers: header
@@ -100,17 +102,27 @@ const MembershipManager = () => {
         );
         console.log("fetchUnits data ", response.data.data)
         setMembers(response.data.data);
-        // setFilteredMember(response.data.data);
+        // set pagination
+        setPagination( prev => ({
+          ...prev,
+          total: response.data.data.length
+        }));
+        
       } catch (error) {
         message.error(error);
         message.error('获取会员数据时发生错误');
+
+        setMembers([]);
+        setPagination( prev => ({
+          ...prev,
+          total: 0
+        }));
       } finally {
         setLoading(false);
       }
     };
 
     useEffect(() => {
-
       fetchUnits();
       setUpdateSuccess(false); // Reset after fetching
       return () => {
@@ -119,75 +131,11 @@ const MembershipManager = () => {
       }
      }, [updateSuccess]);
 
-
-    const handleModalAction = async () => {
-      try {
-        if (modalType === 'update') {
-            await handleUpdateMember();
-            const createResponse = await axios.post(`${membershipUrl}/on_update`, 
-            {
-              member_id: filterMemberInfo[0].member_id,
-              name: editForm.getFieldsValue().name,
-              phone: editForm.getFieldsValue().phone,
-              birth: editForm.getFieldsValue().birth,
-            },
-            {
-              headers: header
-            },
-            cors
-          );
-            if (createResponse.status === 200 && createResponse.data.status === 0) {
-              message.success('会员信息更新成功');
-              const obj = await createResponse.data.data
-              console.log("update MemberInfo", obj);
-              setFilterMemberInfo([obj]);
-              setUpdateSuccess(true);
-            } else {
-              message.error('会员创建失败, 请检查手机号是否已存在');
-            }
-        } 
-        else if (modalType === 'register') {
-            const createResponse = await axios.post(`${membershipUrl}/on_register`, 
-            {
-              name: registerForm.getFieldsValue().name,
-              phone: registerForm.getFieldsValue().phone,
-              birth: registerForm.getFieldsValue().birth,
-            },
-            {
-              headers: header
-            },
-            cors
-          );
-            if (createResponse.status === 200 && createResponse.data.status === 0) {
-              message.success('会员创建成功');
-              const obj = await createResponse.data.data
-              console.log("register MemberInfo", obj);
-              // ...members means copy
-              setMembers([...members, obj]);
-              console.log("members", members);
-              setFilterMemberInfo([obj]);
-              setUpdateSuccess(true);
-            } else {
-              message.error('会员创建失败, 请检查手机号是否已存在');
-            }
-        }
-        setIsModalVisible(false);
-        if (modalType === 'update') {
-          registerForm.resetFields();
-        } else {
-          editForm.resetFields();
-        }
-        // formref.current = null;
-      } catch (error) {
-        if (error.errorFields) {
-          error.errorFields.forEach(field => {
-            console.log(`字段 ${field.name[0]} 错误:`, field.errors);
-          });
-        }else{
-          message.error("请求时发生错误，请稍后重试");
-        }
+     const resetForm = (form) => {
+      if (form) {
+        form.resetFields();
       }
-    };
+    };  
 
   const checkMember = async () => {
     console.log("check memberInfo", memberInfo);
@@ -205,8 +153,11 @@ const MembershipManager = () => {
       console.log("check index ", index);
       if (index === -1) 
         {
-          setModalType('register');
+          // reset registerForm
+          resetForm(registerForm);
+
           // 如果会员不存在，显示注册对话框
+          setModalType('register');
           setIsModalVisible(true);
         } else {
           // duration
@@ -219,33 +170,28 @@ const MembershipManager = () => {
     }
   };
 
-  const handleUpdateMember = async () => {
+  const handleUpdateMember = async (record) => {
 
-    console.log("memberInfo", memberInfo);
-    if (!memberInfo || memberInfo.trim() === '') {
-      message.error('请输入会员信息');
+    if (!record) {
+      message.error('请选择会员');
       return;
     }
-    console.log("members ", members);
-    // some return bool / filter return new array
-    const index = members.findIndex(member =>
-         member.name.toLowerCase() === memberInfo.toLowerCase() || 
-         member.phone.toString().toLowerCase() === memberInfo.toString().toLowerCase());
-    console.log("update index ", index);
-    if (index === -1) 
-      {
-        // 如果会员不存在
-        setIsModalVisible(false);
-        message.info('会员不存在, 请切换到消费/充值管理 的会员查询');
-        return;
-      } else {
-        console.log("更新会员信息 ", members[index]);
-        setModalType('update');
-        // 如果会员存在，显示修改对话框
-        setIsModalVisible(true);
-        console.log("update data ", members[index]);
-        setFilterMemberInfo([members[index]]);
-    };
+    // record is current row / member_index change ,but record is not change
+    console.log("需要更新的会员 record  ", record);
+
+    // reset editForm
+    resetForm(editForm);
+    // set original data
+    editForm.setFieldsValue({
+      name: record.name,
+      phone: record.phone,
+      birth: record.birth,
+    });
+        
+    setFilterMemberInfo([record]);
+    // 如果会员存在，显示修改对话框
+    setModalType('update');
+    setIsModalVisible(true);
   };
 
   // unified Modal组件
@@ -273,7 +219,7 @@ const MembershipManager = () => {
         ]
       },
       update: {
-        title: '修改会员信息',
+        title: '编辑会员信息',
         form: editForm,
         formItms: [
           {
@@ -304,10 +250,18 @@ const MembershipManager = () => {
       <Modal
         title={config.title}
         open={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
+        onCancel={() => {
+          setIsModalVisible(false);
+          resetForm(config.form);
+        }}
         footer={null}
       >
-        <Form form={config.form} onFinish={onFinish}>
+        <Form 
+          form={config.form} 
+          onFinish={handleModalAction}
+          onFinishFailed={onFinishFailed}
+          // initialValues={config.initialValues}
+        >
           {config.formItms.map((item) => (
             <Form.Item 
               label={item.label}
@@ -317,38 +271,115 @@ const MembershipManager = () => {
               <Input />
             </Form.Item>
           ))}
+          <Form.Item>
+            {/* <Button type="primary" htmlType="submit" onClick={handleModalAction}> */}
+            <Button type="primary" htmlType="submit">
+              {modalType === 'register' ? '注册' : '保存'}
+            </Button>
+          </Form.Item>
         </Form>
-        <Button type="primary" htmlType="submit" onClick={handleModalAction}>
-           {modalType === 'register' ? '注册' : '保存'}
-        </Button>
       </Modal>
      );
     };
 
-    const handleConsume = async () => {
+    const handleModalAction = async (values) => {
+      console.log("handleModalAction values ", values);
+      try {
+        if (modalType === 'update') {
+            setMemberInfo(values.phone);
+            const createResponse = await axios.post(`${membershipUrl}/on_update`, 
+            {
+              member_id: filterMemberInfo[0].member_id,
+              name: values.name,
+              phone: values.phone,
+              birth: values.birth,
+            },
+            {
+              headers: header
+            },
+            cors
+          );
+            if (createResponse.status === 200 && createResponse.data.status === 0) {
+              message.success('会员信息更新成功');
+              const obj = await createResponse.data.data
+              console.log("update MemberInfo", obj);
+              setFilterMemberInfo([obj]);
+              setUpdateSuccess(true);
+            } else {
+              message.error('会员创建失败, 请检查手机号是否已存在');
+            }
+        } 
+        else if (modalType === 'register') {
+            // const formData = registerForm.getFieldsValue();
+            // console.log("registerForm ", formData);
+            const createResponse = await axios.post(`${membershipUrl}/on_register`, 
+            {
+              name: values.name,
+              phone: values.phone,
+              birth: values.birth,
+            },
+            {
+              headers: header
+            },
+            cors
+          );
+            if (createResponse.status === 200 && createResponse.data.status === 0) {
+              message.success('会员创建成功');
+              const obj = await createResponse.data.data
+              console.log("register MemberInfo", obj);
+              // ...members means copy
+              setMembers([...members, obj]);
+              console.log("members", members);
+              setFilterMemberInfo([obj]);
+              setUpdateSuccess(true);
+            } else {
+              message.error('会员创建失败, 请检查手机号是否已存在');
+            }
+        }
+        // reset form
+        setIsModalVisible(false);
+        if (modalType === 'update') {
+          resetForm(registerForm);
+        } else {
+          resetForm(editForm);
+        }
+        // formref.current = null;
+      } catch (error) {
+        if (error.errorFields) {
+          error.errorFields.forEach(field => {
+            console.log(`字段 ${field.name[0]} 错误:`, field.errors);
+          });
+        }else{
+          message.error("请求时发生错误，请稍后重试");
+        }
+      }
+    };
 
-        console.log("members ", members);
-        console.log("form phone", consumeForm.getFieldsValue().phone);
+
+    const handleConsume = async (values) => {
+
+        // const formData = consumeForm.getFieldsValue();
+        setLoading(true);
+        console.log("formData ", values);
+        if (values.charge < 0 || values.consume < 0 || values.discount < 0) {
+          message.error('充值、消费和折扣金额不能为负');
+          return;
+        }
+        message.success('表格提交成功 !');
 
         const index = members.findIndex(member =>
-          parseInt(member.phone) === parseInt(consumeForm.getFieldsValue().phone));
+          parseInt(member.phone) === parseInt(values.phone));
         if (index === -1) {
           console.error("Member not found for the given phone number");
         }
-        // console.log("hanleTransaction index ", index);
-        if (consumeForm.getFieldsValue().charge < 0 && consumeForm.getFieldsValue().consume < 0) {
-          message.error("充值和消费金额不能同时为负");
-        }
 
         try {
-            // const consume_resp = await axios.post("http://localhost:8100/membership/on_consume",
             const consume_resp = await axios.post(`${membershipUrl}/on_consume`, 
                 {
                   "member_id": members[index].member_id,
-                  "charge": parseInt(consumeForm.getFieldsValue().charge),
-                  "discount": parseInt(consumeForm.getFieldsValue().discount),
-                  "consume": parseInt(consumeForm.getFieldsValue().consume),
-                  // "balance": balance
+                  "charge": parseInt(values.charge),
+                  "discount": parseInt(values.discount),
+                  "consume": parseInt(values.consume),
                 },
               {
                 headers: header
@@ -364,9 +395,9 @@ const MembershipManager = () => {
             }
 
         } catch (error) {
-              message.error(error);
+            message.error(error);
         }finally{
-          consumeForm.resetFields();
+            setLoading(false);
         }
     };
 
@@ -380,7 +411,6 @@ const MembershipManager = () => {
         console.log("handleSearch index ", index);
         if (index !== -1){
           
-          // const charge_resp = await axios.get('http://localhost:8100/membership/charge_detail',
           const charge_resp = await axios.get(`${membershipUrl}/charge_detail`,
             { 
               params: {
@@ -394,7 +424,13 @@ const MembershipManager = () => {
           );
           const charge_records = charge_resp.data.data;
           setChargeRecord(charge_records);
+          // set pagination
+          setPagination( prev => ({
+            ...prev,
+            total: charge_records.length
+          }));
 
+          // consume_detail
           const consume_resp = await axios.get(`${membershipUrl}/consume_detail`,
             { 
               params: {
@@ -408,6 +444,11 @@ const MembershipManager = () => {
           );
           const consume_records = consume_resp.data.data;
           setConsumeRecord(consume_records);
+          // set pagination
+          setPagination( prev => ({
+            ...prev,
+            total: consume_records.length
+          }));
         }
       } catch (error) {
         message.error(error);
@@ -447,18 +488,15 @@ const MembershipManager = () => {
       },
       {
         title: "编辑",
-        dataIndex: "action",
+        // dataIndex: "action",
         key: "action",
-        render: (text, record) => (
+        render: (_, record) => (
           <Button type="primary" onClick={() => handleUpdateMember(record)}>
             修改
           </Button>
         )
       }
     ];
-  
-  // set page
-
   
   // 充值记录表格
   const charge_record_columns = [
@@ -480,8 +518,14 @@ const MembershipManager = () => {
     {
       title: "时间",
       dataIndex: "created_at",
-      key: "created_at"
-    },
+      key: "created_at",
+    //   // small by front and large by backend
+    //   sorter: (a, b) => {
+    //     return new Date(a.created_at) - new Date(b.created_at);
+    //   },
+    //   sortDirections: ['descend', 'ascend'],
+    // 
+      },
     {
       title: "操作员",
       dataIndex: "operator",
@@ -536,7 +580,7 @@ const MembershipManager = () => {
   const items= [
     {
       key: "1",
-      label: "会员管理",
+      label: "支付管理",
       children: (
         <>
           <Input
@@ -561,7 +605,12 @@ const MembershipManager = () => {
           {/* <label> 充值/消费 </label> */}
           {/* <Form form={form} onFinish={onFinish} onFinishFailed={onFinishFailed} ref={formref} onSubmit={handleSubmit} style={{ marginTop: '40px' }}> */}
           {/* <Form onFinish={onFinish} onFinishFailed={onFinishFailed} ref={consumeFormRef} style={{ marginTop: '40px' }}> */}
-          <Form form={consumeForm} onFinish={onFinish} onFinishFailed={onFinishFailed} style={{ marginTop: '40px' }}>
+          {/* when Button is moved to Form and onFinish can be replaced  handleConsume */}
+          <Form 
+            form={consumeForm} 
+            onFinish={handleConsume} 
+            onFinishFailed={onFinishFailed} 
+            style={{ marginTop: '40px' }}>
             <Form.Item
               label="手机号码"
               name="phone"
@@ -572,7 +621,15 @@ const MembershipManager = () => {
             <Form.Item
               label="充值"
               name="charge"
-              rules={[{ required: true, message: '请输入充值金额' }]}
+              rules={[
+                { required: true, message: '请输入充值金额' },
+                { validator: (rule, value, callback) => {
+                  if (value < 0) {
+                    callback('充值金额不能为负');
+                  }
+                  callback();
+                }}
+              ]}
               initialValue={0}
             >
               <Input />
@@ -580,7 +637,15 @@ const MembershipManager = () => {
             <Form.Item
               label="折扣"
               name="discount"
-              rules={[{ required: true, message: '请输入折扣金额' }]}
+              rules={[
+                { required: true, message: '请输入折扣金额' },
+                { validator: (rule, value, callback) => {
+                  if (value < 0) {
+                    callback('折扣金额不能为负');
+                  }
+                  callback();
+                }}
+              ]}
               initialValue={0}
             >
               <Input />
@@ -588,13 +653,23 @@ const MembershipManager = () => {
             <Form.Item
               label="消费"
               name="consume"
-              rules={[{ required: true, message: '请输入消费金额' }]}
+              rules={[
+                { required: true, message: '请输入消费金额' },
+                { validator: (rule, value, callback) => {
+                  if (value < 0) {
+                    callback('消费金额不能为负');
+                  }
+                  // pass
+                  callback();
+                }}
+              ]}
               initialValue={0}
             >
               <Input />
             </Form.Item>
             <Form.Item>
-              <Button type="primary" htmlType="submit" onClick={handleConsume}>
+              {/* when Button is moved to Form and onFinish can be replaced  handleConsume */}
+              <Button type="primary" htmlType="submit">
                 {/* Submit */}
                 提交
               </Button>
@@ -623,14 +698,31 @@ const MembershipManager = () => {
             dataSource={chargeRecord}
             rowKey={(record) => record.created_at}
             loading={loading}
-            pagination={ {pagesize: 10, current: 1}}
+            pagination={ {
+              pagesize: pagination.pageSize, 
+              current: pagination.current,
+              total: chargeRecord.length || 0,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              // pageSize must in pageSizeOptions and be all set 
+              pageSizeOptions: ['5', '10', '20', '50'],
+              onChange: handlePageChange,
+            }}
           />
           <Table 
             columns={consume_record_columns}
             dataSource={consumeRecord}
             rowKey={(record) => record.created_at}
             loading={loading}
-            pagination={ {pagesize: 10, current: 1}}
+            pagination={ {
+              pagesize: pagination.pageSize, 
+              current: pagination.current,
+              total: consumeRecord.length || 0,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              pageSizeOptions: ['5', '10', '20', '50'],
+              onChange: handlePageChange,
+            }}
           />
 
         </>
@@ -651,7 +743,15 @@ const MembershipManager = () => {
             dataSource={uploadRecords}
             rowKey={(record) => record.phone}
             loading={loading}
-            pagination={ {pagesize: 10, current: 1}}
+            pagination={ {
+              pagesize: pagination.pageSize, 
+              current: pagination.current,
+              total: uploadRecords.length || 0,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              pageSizeOptions: ['5', '10', '20', '50'],
+              onChange: handlePageChange,
+            }}
           />
         </>
 
@@ -661,7 +761,7 @@ const MembershipManager = () => {
 
   return (
     <div style={{ padding: '20px' }}>
-      <h2>支付管理</h2>
+      <h2>会员管理</h2>
       <Tabs defaultActiveKey='1' items={items} />
       {renderModal()}
     </div>

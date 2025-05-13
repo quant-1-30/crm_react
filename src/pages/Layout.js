@@ -5,7 +5,7 @@ import { LogoutButton } from '../components/context';
 const Layout = () => (
   <div className="min-h-screen flex flex-col">
     <header className="p-4 bg-gray-100 flex justify-between items-center shadow">
-      <div className="text-xl font-bold">会员卡系统</div>
+      <div className="text-xl font-bold">客户管理系统</div>
       {/* <LogoutButton /> */}
       <div className="ml-auto"> {/* This will push the LogoutButton to the right */}
         <LogoutButton />
