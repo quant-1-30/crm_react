@@ -139,17 +139,29 @@ const MembershipManager = () => {
 
   const checkMember = async () => {
     console.log("check memberInfo", memberInfo);
-    if (!memberInfo || memberInfo.trim() === '') {
+
+    const searchValue = String(memberInfo || '').trim();
+
+    // if (!memberInfo || memberInfo.trim() === '') {
+    if (!searchValue) {
       message.error('请输入会员信息');
       return;
     }
     try {
-      // 查询会员是否存在
-      console.log("check members ", members);
-      // some return bool / filter return new array
-      const index = members.findIndex(member =>
-           member.name.toLowerCase() === memberInfo.toLowerCase() || 
-           member.phone.toString().toLowerCase() === memberInfo.toString().toLowerCase());
+      // 性能问题
+      // const index = members.findIndex(member =>
+      //      member.name.toLowerCase() === memberInfo.toLowerCase() || 
+      //      member.phone.toString().toLowerCase() === memberInfo.toString().toLowerCase());
+
+      // 安全地比较字符串
+      const index = members.findIndex(member => {
+      // 确保所有值都是字符串并转换为小写
+      const memberName = String(member.name || '').toLowerCase();
+      const memberPhone = String(member.phone || '').toLowerCase();
+      const searchTerm = searchValue.toLowerCase();
+      return memberName === searchTerm || memberPhone === searchTerm;
+    });   
+
       console.log("check index ", index);
       if (index === -1) 
         {
@@ -367,8 +379,15 @@ const MembershipManager = () => {
         }
         message.success('表格提交成功 !');
 
-        const index = members.findIndex(member =>
-          parseInt(member.phone) === parseInt(values.phone));
+        // 性能问题
+        // const index = members.findIndex(member =>
+        //   parseInt(member.phone) === parseInt(values.phone));
+        const index = members.findIndex(member => {
+          const memberPhone = parseInt(member.phone);
+          const searchPhone = parseInt(values.phone);
+          return memberPhone === searchPhone;
+        })
+
         if (index === -1) {
           console.error("Member not found for the given phone number");
         }
@@ -405,9 +424,18 @@ const MembershipManager = () => {
       // debugger;
 
       try {
-        const index = members.findIndex(member =>
-             member.name.toLowerCase() === memberInfo.toLowerCase() || 
-             member.phone.toString().toLowerCase() === memberInfo.toString().toLowerCase());
+        // 性能问题
+        // const index = members.findIndex(member =>
+        //      member.name.toLowerCase() === memberInfo.toLowerCase() || 
+        //      member.phone.toString().toLowerCase() === memberInfo.toString().toLowerCase());
+        const index = members.findIndex(member => {
+            // lowercase
+            const memberName = String(member.name || '').toLowerCase();
+            const memberPhone = String(member.phone || '').toLowerCase();
+            const searchTerm = memberInfo.toLowerCase();
+            return memberName === searchTerm || memberPhone === searchTerm;
+        })
+
         console.log("handleSearch index ", index);
         if (index !== -1){
           

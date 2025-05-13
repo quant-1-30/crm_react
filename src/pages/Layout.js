@@ -1,21 +1,104 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
-import { LogoutButton } from '../components/context';
+import { Layout, Menu, Button, theme } from 'antd';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from './context';
+import {
+  DashboardOutlined,
+  UserOutlined,
+  TeamOutlined,
+  BarChartOutlined,
+  LogoutOutlined
+} from '@ant-design/icons';
 
-const Layout = () => (
-  <div className="min-h-screen flex flex-col">
-    <header className="p-4 bg-gray-100 flex justify-between items-center shadow">
-      <div className="text-xl font-bold">客户管理系统</div>
-      {/* <LogoutButton /> */}
-      <div className="ml-auto"> {/* This will push the LogoutButton to the right */}
-        <LogoutButton />
-      </div>
-    </header>
-    <main className="flex-1 p-4">
-      {/* Outlet 会渲染子路由对应的页面 */}
-      <Outlet />
-    </main>
-  </div>
-);
+const { Header, Content, Sider } = Layout;
 
-export default Layout;
+const AppLayout = ({ children }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { logout } = useAuth();
+  const {
+    token: { colorBgContainer, borderRadiusLG },
+  } = theme.useToken();
+
+  const menuItems = [
+    {
+      key: '/dashboard',
+      icon: <DashboardOutlined />,
+      label: '仪表盘',
+    },
+    {
+      key: '/membership',
+      icon: <UserOutlined />,
+      label: '会员管理',
+    },
+    {
+      key: '/coporate',
+      icon: <TeamOutlined />,
+      label: '企业管理',
+    },
+    {
+      key: '/stats',
+      icon: <BarChartOutlined />,
+      label: '统计分析',
+    },
+  ];
+
+  const handleMenuClick = ({ key }) => {
+    navigate(key);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  return (
+    <Layout style={{ minHeight: '100vh' }}>
+      <Header style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between',
+        background: colorBgContainer,
+        padding: '0 24px'
+      }}>
+        <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
+          CRM 系统
+        </div>
+        <Button 
+          type="primary" 
+          danger 
+          icon={<LogoutOutlined />}
+          onClick={handleLogout}
+        >
+          退出登录
+        </Button>
+      </Header>
+      <Layout>
+        <Sider width={200} style={{ background: colorBgContainer }}>
+          <Menu
+            mode="inline"
+            selectedKeys={[location.pathname]}
+            style={{ height: '100%', borderRight: 0 }}
+            items={menuItems}
+            onClick={handleMenuClick}
+          />
+        </Sider>
+        <Layout style={{ padding: '24px' }}>
+          <Content
+            style={{
+              padding: 24,
+              margin: 0,
+              minHeight: 280,
+              background: colorBgContainer,
+              borderRadius: borderRadiusLG,
+            }}
+          >
+            {children}
+          </Content>
+        </Layout>
+      </Layout>
+    </Layout>
+  );
+};
+
+export default AppLayout;
