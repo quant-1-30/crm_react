@@ -1,5 +1,5 @@
 // src/pages/MembershipManager.js
-import React, { useState, useEffect, useRef, useContext} from 'react';
+import React, { useState, useEffect, useContext} from 'react';
 import { Input, Button, message, Modal, Form, Tabs, Table} from 'antd';
 import axios from 'axios';
 import 'antd/dist/reset.css';
@@ -8,22 +8,31 @@ import { AuthContext } from '../components/context';
 
 
 const MembershipManager = () => {
-  const formref = useRef(null);
-  const [form] = Form.useForm();
-  const [formValues, setFormValues] = useState( {});
+  // 表单
+  // const formref = useRef(null);
+  const [registerForm] = Form.useForm();
+  const [consumeForm] = Form.useForm();
+  const [editForm] = Form.useForm();
+  // // ref
+  // const registerFormRef = useRef(null);
+  // const consumeFormRef = useRef(null);
+  const [loading, setLoading] = useState(false);
+
+  // unified Modavl
+  const [modalType, setModalType] = useState(''); // 'register' 或 'update'
+
 
   const [members, setMembers] = useState([]);
   const [filterMemberInfo, setFilterMemberInfo] = useState([]);
   const [memberName, setMemberName] = useState('');
-  // const [memberBalance, setMemberBalance] = useState(0);
   const [memberPhone, setMemberPhone] = useState();
+
   const [chargeRecord, setChargeRecord] = useState();
   const [consumeRecord, setConsumeRecord] = useState(0);
   
   const [uploadRecords, setUploadRecords] = useState([]);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [updateSuccess, setUpdateSuccess] = useState(false);
 
   // const token = localStorage.getItem('token')
@@ -38,23 +47,44 @@ const MembershipManager = () => {
 
   const cors = {withCredential: true};
 
-  const onFinish = (values) => {
-    console.log(' onFinish Form values:', values);
-    console.log("current", formref.current);
-    if (!formref.current) {
-       formref.current.submit();
+
+  const onFinish = async (values) => {
+    if (loading) {
+      return;
     }
-    setFormValues(values);
-    message.success('Form submitted successfully!');
-    // You can handle form submission here, such as sending data to an API
-    //formref.current=null;
+    try {
+      setLoading(true);
+      // console.log("current", formref.current);
+      // if (!formref.current) {
+      //    formref.current.submit();
+      // }
+      message.success('表格提交成功 !');
+      // formref.current=null;
+    } catch (error) {
+      message.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  //  onsubmit and onFinish conflict   
+  // const handleSubmit = (e) => {
+  //     e.preventDefault(); // Prevent the default form submission behavior
+  //     console.log('Form data submitted:', form.getFieldsValue());
+  //     // Handle form submission, e.g., send data to an API
+  //   };
 
   const onFinishFailed = (errorInfo) => {
     console.log('Failed:', errorInfo);
-    if (! formref.current) {
-        formref.current.submit();
-    }
+    // if (! formref.current) {
+    //     formref.current.submit();
+    // }
+    console.log('验证失败信息:', errorInfo);
+    console.log('失败字段:', errorInfo.errorFields);
+    // 显示具体错误信息
+    errorInfo.errorFields.forEach(field => {
+      console.log(`字段 ${field.name[0]} 错误:`, field.errors);
+    });
     // message.error('Please check the form fields and try again.');
   };
 
@@ -63,10 +93,10 @@ const MembershipManager = () => {
       try {
         // const response = await axios.get('http://localhost:8100/membership/list',
         const response = await axios.get(`${membershipUrl}/list`,
-          // {
-          //   headers: header
-          // },
-          // cors
+          {
+            headers: header
+          },
+          cors
         );
         console.log("fetchUnits data ", response.data.data)
         setMembers(response.data.data);
@@ -79,36 +109,16 @@ const MembershipManager = () => {
       }
     };
 
-  const handleSubmit = (e) => {
-      e.preventDefault(); // Prevent the default form submission behavior
-      console.log('Form data submitted:', formValues);
-      // Handle form submission, e.g., send data to an API
-    };
+    useEffect(() => {
 
-  const fetchMemberBalance = async (memberId) => {
-    try {
-          const balance_resp = await axios.get(`${membershipUrl}/on_balance`, 
-            {
-              params: {
-                "member_id": memberId,
-              },
-            },
-            {
-              headers: header
-            },
-          cors
-          );
-          console.log("balance", balance_resp.data.data);
-          if (balance_resp.status !== 200) {
-            message.error('查询余额失败');
-            }
-          return balance_resp.data.data;
-    } catch (error) {
-      message.error(error);
-      message.error('查询余额时发生错误');
-    }
-  };
-  
+      fetchUnits();
+      setUpdateSuccess(false); // Reset after fetching
+      return () => {
+        console.log("Cleanup: Component will unmount");
+       //  setLoading(false);
+      }
+     }, [updateSuccess]);
+
   const checkMember = async () => {
     console.log("memberName", memberName);
     if (!memberName || memberName.trim() === '') {
@@ -130,10 +140,8 @@ const MembershipManager = () => {
         } else {
           message.info('会员已存在');
 
-          const balance = await fetchMemberBalance(members[index].member_id);
-          const filteredData = { ...members[index], "balance": balance};
-          setFilterMemberInfo([filteredData]);
-          console.log("fileredData ", [filteredData]);
+          setFilterMemberInfo([members[index]]);
+          console.log("fileredData ", members[index]);
       };
     } catch (error) {
       message.error(error);
@@ -143,85 +151,128 @@ const MembershipManager = () => {
 
   const handleRegister = async () => {
 
-    // if (!formref.current) {
-    //   formref.current.submit();
-    // };
-
     console.log("token ", token);
-    setMemberName(formValues.member_name);
-    console.log("handleRegister formValues", formValues);
-    console.log("member_name ", memberName);
+    console.log("form.getFieldsValue() ", registerForm.getFieldsValue());
     try {
-      // 创建新会员
-      // const createResponse = await axios.post('http://localhost:8100/membership/on_register', 
       const createResponse = await axios.post(`${membershipUrl}/on_register`, 
       {
-        //name: memberName,
-        name: formValues.member_name,
-        phone: formValues.phone,
-        birth: formValues.birth,
+        name: registerForm.getFieldsValue().member_name,
+        phone: registerForm.getFieldsValue().phone,
+        birth: registerForm.getFieldsValue().birth,
       },
       {
         headers: header
       },
       cors
     );
-      if (createResponse.status === 200) {
+      if (createResponse.status === 200 && createResponse.data.status === 0) {
         message.success('会员创建成功');
-        // ...members means copy
         const obj = await createResponse.data.data
-        // console.log("response ", obj[0]);
-        // setMembers([...members, obj[0]]);
+        console.log("register MemberInfo", obj);
+        // ...members means copy
         setMembers([...members, obj]);
-        // setUnits([...units, obj[0]]);
         console.log("members", members);
-        const filteredData = {...obj, "balance": 0};
-        setFilterMemberInfo([filteredData]);
-        console.log("register MemberInfo", filteredData);
+        setFilterMemberInfo([obj]);
         setUpdateSuccess(true);
       } else {
-        message.error('会员创建失败');
+        message.error('会员创建失败, 请检查手机号是否已存在');
       }
     } catch (error) {
       message.error('注册时发生错误，请稍后重试');
     } finally {
       setIsModalVisible(false);
-      form.resetFields();
+      registerForm.resetFields();
       // formref.current = null;
     }
   };
 
+  const handleUpdateMember = async () => {
+
+    console.log("memberName", memberName);
+    if (!memberName || memberName.trim() === '') {
+      message.error('请输入会员名称');
+      return;
+    }
+    console.log("members ", members);
+    // some return bool / filter return new array
+    const index = members.findIndex(member =>
+         member.name.toLowerCase() === memberName.toLowerCase() || 
+         member.phone.toString().toLowerCase() === memberName.toString().toLowerCase());
+    console.log("index ", index);
+    if (index === -1) 
+      {
+        // 如果会员不存在，显示注册对话框
+        setIsModalVisible(true);
+        message.info('会员不存在, 请切换到消费/充值管理 的会员查询');
+      } else {
+        // 如果会员存在，显示修改对话框
+        setIsModalVisible(true);
+        console.log("updateData ", members[index]);
+        try {
+          const response = await axios.post(`${membershipUrl}/on_update`, 
+            {
+              member_id: members[index].member_id,
+              name: editForm.getFieldsValue().name,
+              phone: editForm.getFieldsValue().phone,
+              birth: editForm.getFieldsValue().birth,
+            },
+            {
+              headers: header
+            },
+            cors
+          );
+  
+          if (response.status === 200 && response.data.status === 0) {
+            message.success('会员信息更新成功');
+            setUpdateSuccess(true);
+            // setIsEditModalVisible(false);
+            editForm.resetFields();
+          } else {
+            message.error('会员信息更新失败');
+          }
+        } catch (error) {
+          message.error('更新时发生错误，请稍后重试');
+        }
+    };
+
+  };
+
+  const handleModalAction = async () => {
+    try {
+      if (modalType === 'update') {
+        await handleUpdateMember();
+      } else {
+        await handleRegister();
+      }
+    } catch (error) {
+      message.error(error);
+    }
+  }
+
   const handleConsume = async () => {
 
     console.log("members ", members);
-    console.log("form phone", formValues.phone);
+    console.log("form phone", consumeForm.getFieldsValue().phone);
 
     const index = members.findIndex(member =>
-      parseInt(member.phone) === parseInt(formValues.phone));
+      parseInt(member.phone) === parseInt(consumeForm.getFieldsValue().phone));
     if (index === -1) {
       console.error("Member not found for the given phone number");
     }
-    console.log("hanleTransaction index ", index);
-    if (formValues.charge < 0 && formValues.consume < 0) {
+    // console.log("hanleTransaction index ", index);
+    if (consumeForm.getFieldsValue().charge < 0 && consumeForm.getFieldsValue().consume < 0) {
       message.error("充值和消费金额不能同时为负");
     }
 
-    const balance = await fetchMemberBalance(members[index].member_id);
-    const newBalance = balance + parseInt(formValues.charge) + parseInt(formValues.discount) - parseInt(formValues.consume)
-
     try {
-      // if (parseInt(formValues.consume) > (balance + parseInt(formValues.charge))) {
-      if (newBalance < 0) {
-          message.error("消费金额余额不足");        
-      } else {
         // const consume_resp = await axios.post("http://localhost:8100/membership/on_consume",
         const consume_resp = await axios.post(`${membershipUrl}/on_consume`, 
             {
               "member_id": members[index].member_id,
-              "charge": parseInt(formValues.charge),
-              "discount": parseInt(formValues.discount),
-              "consume": parseInt(formValues.consume),
-              "balance": newBalance
+              "charge": parseInt(consumeForm.getFieldsValue().charge),
+              "discount": parseInt(consumeForm.getFieldsValue().discount),
+              "consume": parseInt(consumeForm.getFieldsValue().consume),
+              // "balance": balance
             },
           {
             headers: header
@@ -229,15 +280,17 @@ const MembershipManager = () => {
           cors
           );
   
-        if (consume_resp.status === 200) {
+        if (consume_resp.status === 200 && consume_resp.data.status === 0) {
           message.success('操作成功');
-            }else{
-            message.error('操作失败');
-            }
+          setUpdateSuccess(true);
+        }else{
+          message.error('余额不足 ', consume_resp.data.data);
         }
 
     } catch (error) {
           message.error(error);
+    }finally{
+      consumeForm.resetFields();
     }
     };
 
@@ -289,11 +342,12 @@ const MembershipManager = () => {
     };
   
     const onUpload = (data) => {
-    console.log("upload success ", data);
-    setUpdateSuccess(true);
-    setUploadRecords(data);
-  };
+      console.log("upload success ", data);
+      // setUpdateSuccess(true);
+      setUploadRecords(data);
+     };
 
+    // 会员信息表格
     const member_columns = [
       {
         title: "会员名称",
@@ -315,8 +369,19 @@ const MembershipManager = () => {
         dataIndex: "balance",
         key: "balance"
       },
+      {
+        title: "编辑",
+        dataIndex: "action",
+        key: "action",
+        render: (text, record) => (
+          <Button type="primary" onClick={() => handleUpdateMember(record)}>
+            修改
+          </Button>
+        )
+      }
     ]; 
   
+  // 充值记录表格
   const charge_record_columns = [
     {
       title: "会员名称",
@@ -345,6 +410,7 @@ const MembershipManager = () => {
     },
   ];
 
+  // 消费记录表格
   const consume_record_columns = [
     {
       title: "会员名称",
@@ -368,6 +434,7 @@ const MembershipManager = () => {
     }
   ];
 
+  // 文件上传表格
   const upload_columns = [
     {
       title: "会员名称",
@@ -386,19 +453,30 @@ const MembershipManager = () => {
     },
   ]; 
 
-  useEffect(() => {
-   fetchUnits();
-   setUpdateSuccess(false); // Reset after fetching
+  // 会员信息修改
+  const member_update_columns = [
+    {
+      title: "会员名称",
+      dataIndex: "name",
+      key: "name",
+    },
+    {
+      title: "会员手机",
+      dataIndex: "phone",
+      key: "phone"
+    },
+    {
+      title: "会员生日",
+      dataIndex: "birth",
+      key: "birth"
+    },
+  ];
 
-   return () => {
-     console.log("Cleanup: Component will unmount");
-   }
-  }, [updateSuccess]);
-
+  // 渲染
   const items= [
     {
       key: "1",
-      label: "会员信息",
+      label: "消费/充值管理",
       children: (
         <>
           <Input
@@ -424,7 +502,9 @@ const MembershipManager = () => {
             onCancel={() => setIsModalVisible(false)}
             footer={null}
           >
-            <Form form={form} onFinish={onFinish} onFinishFailed={onFinishFailed} ref={formref} onSubmit={handleSubmit}>
+            {/* <Form form={form} onFinish={onFinish} onFinishFailed={onFinishFailed} ref={formref} onSubmit={handleSubmit}> */}
+            {/* <Form form={registerForm} onFinish={onFinish} onFinishFailed={onFinishFailed} ref={registerFormRef}> */}
+            <Form form={registerForm} onFinish={onFinish} onFinishFailed={onFinishFailed}>
               <Form.Item
                 label="会员名称"
                 name="member_name"
@@ -448,7 +528,8 @@ const MembershipManager = () => {
               </Form.Item>
               <Form.Item>
                 <Button type="primary" htmlType="submit">
-                  Submit
+                  {/* Submit */}
+                  提交
                 </Button>
               </Form.Item>
             </Form>
@@ -457,9 +538,13 @@ const MembershipManager = () => {
             </Button>
           </Modal>
 
+
+
           <div>
           {/* <label> 充值/消费 </label> */}
-          <Form form={form} onFinish={onFinish} onFinishFailed={onFinishFailed} ref={formref} onSubmit={handleSubmit} style={{ marginTop: '40px' }}>
+          {/* <Form form={form} onFinish={onFinish} onFinishFailed={onFinishFailed} ref={formref} onSubmit={handleSubmit} style={{ marginTop: '40px' }}> */}
+          {/* <Form onFinish={onFinish} onFinishFailed={onFinishFailed} ref={consumeFormRef} style={{ marginTop: '40px' }}> */}
+          <Form form={consumeForm} onFinish={onFinish} onFinishFailed={onFinishFailed} style={{ marginTop: '40px' }}>
             <Form.Item
               label="手机号码"
               name="phone"
@@ -493,7 +578,8 @@ const MembershipManager = () => {
             </Form.Item>
             <Form.Item>
               <Button type="primary" htmlType="submit">
-                Submit
+                {/* Submit */}
+                提交
               </Button>
             </Form.Item>
           </Form>
@@ -506,7 +592,7 @@ const MembershipManager = () => {
     },
     {
       key: "2",
-      label: "交易流水",
+      label: "交易记录",
       children: (
         <>
           <Input
@@ -541,6 +627,72 @@ const MembershipManager = () => {
     },
     {
       key: "3",
+      label: "会员信息修改",
+      children: (
+        <>
+          <Input
+            placeholder="输入会员名称或者手机号"
+            value={memberName}
+            onChange={(e) => setMemberName(e.target.value)}
+            style={{ width: 200, marginRight: 10 }}
+          />
+          <Button type="primary" onClick={handleUpdateMember}>修改会员信息</Button>
+          <Table 
+            columns={member_update_columns}
+            dataSource={members}
+            rowKey={(record) => record.name}
+            loading={loading}
+            pagination={ {pagesize: 10, current: 1}}
+          />
+          <Modal
+              title="修改会员信息"
+              open={isModalVisible}
+              onCancel={() => {
+                setIsModalVisible(false);
+                editForm.resetFields();
+              }}
+              footer={null}
+            >
+              <Form
+                form={editForm}
+                // onFinish={handleUpdateMember}
+                onFinish={onFinish}
+                onFinishFailed={onFinishFailed}
+                layout="vertical"
+              >
+                <Form.Item
+                  label="会员名称"
+                  name="name"
+                  rules={[{ required: true, message: '请输入会员名称!' }]}
+                >
+                  <Input />
+                </Form.Item>
+                <Form.Item
+                  label="会员手机"
+                  name="phone"
+                  rules={[{ required: true, message: '请输入会员手机!' }]}
+                >
+                  <Input />
+                </Form.Item>
+                <Form.Item
+                  label="会员生日"
+                  name="birth"
+                  rules={[{ required: true, message: '请输入会员生日!' }]}
+                >
+                  <Input />
+                </Form.Item>
+                <Form.Item>
+                  <Button type="primary" htmlType="submit" onClick={handleUpdateMember}>
+                    保存
+                  </Button>
+                </Form.Item>
+              </Form>
+            </Modal>
+        </>
+      ),
+    },
+    {
+      key: "4",
       label: "文件上传",
       children: (
         <>
