@@ -1,9 +1,11 @@
 import React, { useState, useContext, useRef, useEffect } from 'react';
-import { Form, Input, Button, Checkbox, message, Tabs} from 'antd';
+import { Form, Input, Button, Checkbox, message, Tabs, Card, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import 'antd/dist/reset.css';
 import axios from 'axios';
 import { AuthContext } from '../components/context';
+
+const { Title } = Typography;
 
 const LoginPage = () => {
 
@@ -45,7 +47,8 @@ const LoginPage = () => {
     console.log('Success:', values);
     // backend
     try {
-        const response = await axios.post(`${homeUrl}/on_login`, {
+        const response = await axios.post(`${homeUrl}/on_login`, 
+        {
             name: values.username,
             passwd: values.password,
         });
@@ -80,7 +83,6 @@ const LoginPage = () => {
     setIsSendingCode(true);
     // debugger;
     try {
-        // const response = await axios.post("http://localhost:8100/component/on_sms",
         const response = await axios.post(`${smsUrl}/on_sms`,
             {"phone": phone}
         );
@@ -98,10 +100,8 @@ const LoginPage = () => {
     }
   };
 
-
   const onRegister = async (values) => {
     try {
-        // const response = await axios.post("http://localhost:8100/home/on_register",
         const response = await axios.post(`${homeUrl}/on_register`,
             {name: values.username,
              passwd: values.password,
@@ -123,7 +123,6 @@ const LoginPage = () => {
   
   const onReset = async (values) => {
     try {
-        // const response = await axios.post("http://localhost:8100/home/on_reset",
         const response = await axios.post(`${homeUrl}/on_reset`,
             {
              passwd: values.password,
@@ -143,43 +142,112 @@ const LoginPage = () => {
     }
   };
 
+  // 添加样式对象
+  const styles = {
+    // 页面容器样式
+    container: {                                       // 弹性布局
+      display: 'flex',                                 // 弹性布局
+      justifyContent: 'center',                        // 水平居中
+      alignItems: 'center',                            // 垂直居中
+      minHeight: '100vh',                              // 最小高度
+      background: '#f0f2f5',                          // 背景颜色
+    },
+    // 卡片样式
+    card: {
+      width: '100%',                                    // 宽度
+      maxWidth: '400px',                               // 最大宽度
+      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',        // 阴影
+      borderRadius: '8px',                              // 圆角
+    },
+    // 标题样式
+    header: {
+      textAlign: 'center',                              // 文本居中
+      marginBottom: '24px',                            // 下边距
+    },
+    // 表单样式
+    form: {
+      maxWidth: '300px',                                // 最大宽度
+      margin: '0 auto',                                 // 自动居中
+    },
+    // 表单项样式
+    formItem: {
+      marginBottom: '24px',                             // 下边距
+    },
+    // 按钮样式
+    button: {
+      width: '100%',                                    // 宽度
+      height: '40px',                                   // 高度
+      fontSize: '16px',                                 // 字体大小
+    },
+    // 标签页样式
+    tabs: {
+      width: '100%',                                    // 宽度
+    },
+    // 输入框样式
+    input: {
+      height: '40px',                                   // 高度
+    },
+    // 验证码样式
+    verifyCode: {
+      display: 'flex',                                  // 弹性布局
+      gap: '8px',                                      // 间距
+    },
+    // 验证码输入框样式
+    verifyCodeInput: {
+      flex: 1,                                         // 弹性布局
+    },
+    // 验证码按钮样式
+    verifyCodeButton: {
+      width: '120px',                                   // 宽度
+    },
+  };
+
   const items = [
     {
       key: "login",
-      label: "登陆",
+      label: "登录",
       children: (
         <Form
-        name="login"
-        initialValues={{ remember: true }}
-        onFinish={onFinish}
-        onFinishFailed={onFinishFailed}
-      >
-        <Form.Item
-          label="用户名"
-          name="username"
-          rules={[{ required: true, message: '请输入用户名!' }]}
+          name="login"
+          initialValues={{ remember: true }}
+          onFinish={onFinish}
+          onFinishFailed={onFinishFailed}
+          style={styles.form}
         >
-          <Input />
-        </Form.Item>
+          <Form.Item
+            name="username"
+            rules={[{ required: true, message: '请输入用户名!' }]}
+            style={styles.formItem}
+          >
+            <Input 
+              placeholder="用户名" 
+              size="large"
+              style={styles.input}
+            />
+          </Form.Item>
 
-        <Form.Item
-          label="密码"
-          name="password"
-          rules={[{ required: true, message: '请输入密码!' }]}
-        >
-          <Input.Password />
-        </Form.Item>
+          <Form.Item
+            name="password"
+            rules={[{ required: true, message: '请输入密码!' }]}
+            style={styles.formItem}
+          >
+            <Input.Password 
+              placeholder="密码" 
+              size="large"
+              style={styles.input}
+            />
+          </Form.Item>
 
-        <Form.Item name="remember" valuePropName="checked">
-          <Checkbox>记住我</Checkbox>
-        </Form.Item>
+          <Form.Item name="remember" valuePropName="checked" style={styles.formItem}>
+            <Checkbox>记住我</Checkbox>
+          </Form.Item>
 
-        <Form.Item>
-          <Button type="primary" htmlType="submit">
-            登录
-          </Button>
-        </Form.Item>
-      </Form> 
+          <Form.Item>
+            <Button type="primary" htmlType="submit" style={styles.button}>
+              登录
+            </Button>
+          </Form.Item>
+        </Form>
       ),
     },
     {
@@ -187,115 +255,157 @@ const LoginPage = () => {
       label: "注册",
       children: (
         <Form
-        form={form}
-        name='register'
-        onFinish={onRegister}
-    >
-      <Form.Item
-        label="用户名"
-        name="username"
-        rules={[{ required: true, message: '请输入用户名!' }]}
-    >
-      <input />
-    </Form.Item>
+          form={form}
+          name='register'
+          onFinish={onRegister}
+          style={styles.form}
+        >
+          <Form.Item
+            name="username"
+            rules={[{ required: true, message: '请输入用户名!' }]}
+            style={styles.formItem}
+          >
+            <Input 
+              placeholder="用户名" 
+              size="large"
+              style={styles.input}
+            />
+          </Form.Item>
 
-     <Form.Item
-      label='密码'
-      name='password'
-      rules={[{required: true, message: '请输入密码'}]}
-    >
-        <Input.Password />
-    </Form.Item>
+          <Form.Item
+            name="password"
+            rules={[{ required: true, message: '请输入密码' }]}
+            style={styles.formItem}
+          >
+            <Input.Password 
+              placeholder="密码" 
+              size="large"
+              style={styles.input}
+            />
+          </Form.Item>
 
-    <Form.Item
-     label='手机号码'
-     name='phone'
-     rules={[{required: true, message: '请输入手机号码'}]}
-     >
-        <Input />
-     </Form.Item>
+          <Form.Item
+            name="phone"
+            rules={[{ required: true, message: '请输入手机号码' }]}
+            style={styles.formItem}
+          >
+            <Input 
+              placeholder="手机号码" 
+              size="large"
+              style={styles.input}
+            />
+          </Form.Item>
 
-     <Form.Item
-      label='验证码'
-      name='verify_code'
-      rules={[{required: true, message: '请输入验证码'}]}
-    >
-        <Input addonAfter={
-            <Button
-             type='link'
-            //  onClick={() => OnSendVerifyCode(Form.getFieldValue('phone'))}
-             onClick={() => OnSendVerifyCode()}
-             disabled={isSendingCode || countdown > 0}  // 倒计时或发送中禁用
-             >
-               {countdown > 0 ? `${countdown}s后重试` : '获取验证码'}
-        </Button>
-        }/>
-    </Form.Item>
+          <Form.Item
+            name="verify_code"
+            rules={[{ required: true, message: '请输入验证码' }]}
+            style={styles.formItem}
+          >
+            <div style={styles.verifyCode}>
+              <Input 
+                placeholder="验证码" 
+                size="large"
+                style={styles.verifyCodeInput}
+              />
+              <Button
+                type="primary"
+                onClick={OnSendVerifyCode}
+                disabled={isSendingCode || countdown > 0}
+                style={styles.verifyCodeButton}
+              >
+                {countdown > 0 ? `${countdown}s` : '获取验证码'}
+              </Button>
+            </div>
+          </Form.Item>
 
-    <Form.Item>
-        <Button type='primary' htmlType='submit'>
-            注册
-        </Button>
-    </Form.Item>   
-    </Form> 
+          <Form.Item>
+            <Button type="primary" htmlType="submit" style={styles.button}>
+              注册
+            </Button>
+          </Form.Item>
+        </Form>
       ),
     },
     {
       key: "reset",
-      label: "重置",
+      label: "重置密码",
       children: (
         <Form
-        form={form}
-        name='reset'
-        onFinish={onReset}
-    >
+          form={form}
+          name='reset'
+          onFinish={onReset}
+          style={styles.form}
+        >
+          <Form.Item
+            name="phone"
+            rules={[{ required: true, message: '请输入手机号码' }]}
+            style={styles.formItem}
+          >
+            <Input 
+              placeholder="手机号码" 
+              size="large"
+              style={styles.input}
+            />
+          </Form.Item>
 
-    <Form.Item
-     label='手机号码'
-     name='phone'
-     rules={[{required: true, message: '请输入手机号码'}]}
-     >
-        <Input />
-     </Form.Item>
+          <Form.Item
+            name="verify_code"
+            rules={[{ required: true, message: '请输入验证码' }]}
+            style={styles.formItem}
+          >
+            <div style={styles.verifyCode}>
+              <Input 
+                placeholder="验证码" 
+                size="large"
+                style={styles.verifyCodeInput}
+              />
+              <Button
+                type="primary"
+                onClick={OnSendVerifyCode}
+                disabled={isSendingCode || countdown > 0}
+                style={styles.verifyCodeButton}
+              >
+                {countdown > 0 ? `${countdown}s` : '获取验证码'}
+              </Button>
+            </div>
+          </Form.Item>
 
-     <Form.Item
-      label='验证码'
-      name='verify_code'
-      rules={[{required: true, message: '请输入验证码'}]}
-    >
-        <Input addonAfter={
-            <Button
-             type='link'
-             onClick={() => OnSendVerifyCode()}
-             disabled={isSendingCode || countdown > 0}  // 倒计时或发送中禁用
-             >
-               {countdown > 0 ? `${countdown}s后重试` : '获取验证码'}
-        </Button>
-        }/>
-    </Form.Item>
-     
-     <Form.Item
-      label='重置密码'
-      name='password'
-      rules={[{required: true, message: '请输入密码'}]}
-    >
-        <Input.Password />
-    </Form.Item>
+          <Form.Item
+            name="password"
+            rules={[{ required: true, message: '请输入密码' }]}
+            style={styles.formItem}
+          >
+            <Input.Password 
+              placeholder="新密码" 
+              size="large"
+              style={styles.input}
+            />
+          </Form.Item>
 
-    <Form.Item>
-        <Button type='primary' htmlType='submit'>
-            重置
-        </Button>
-    </Form.Item>   
-    </Form> 
+          <Form.Item>
+            <Button type="primary" htmlType="submit" style={styles.button}>
+              重置密码
+            </Button>
+          </Form.Item>
+        </Form>
       ),
     },
   ];
 
   return (
-    <div style={{ maxWidth: '300px', margin: '100px auto' }}>
-      <h2>丽怡会员管理平台</h2>
-      <Tabs activeKey={activeTab} onChange={setActiveTab} items={items} />
+    <div style={styles.container}>
+      <Card style={styles.card}>
+        <div style={styles.header}>
+          <Title level={2}>丽怡会员管理平台</Title>
+        </div>
+        <Tabs 
+          activeKey={activeTab} 
+          onChange={setActiveTab} 
+          items={items} 
+          style={styles.tabs}
+          size="large"
+        />
+      </Card>
     </div>
   );
 };
