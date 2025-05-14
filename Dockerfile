@@ -10,12 +10,12 @@ WORKDIR /app
 ## Copy package.json and package-lock.json (or yarn.lock) into the container
 COPY  package.json package-lock.json ./
 
-# Install application dependencies
-# If you're using Yarn, you can use: RUN yarn install
-RUN npm install && npm run build
-
 # Copy the rest of the application code into the container
 COPY . .
+
+# Install application dependencies build need public and src
+RUN npm install && npm run build
+
 
 # ========== Stage 2: Serve with Nginx ==========
 FROM nginx:alpine
