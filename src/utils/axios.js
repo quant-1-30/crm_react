@@ -4,7 +4,8 @@ import axios from 'axios';
 const instance = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8100',  // 你的后端 API 地址
   timeout: 5000,
-  withCredentials: true  // 允许跨域请求携带凭证
+  //withCredentials: true  // 允许跨域请求携带凭证
+  withCredentials: JSON.parse(process.env.REACT_APP_WITH_CREDENTIALS || 'false')  // 允许跨域请求携带凭证
 });
 
 // 请求拦截器
