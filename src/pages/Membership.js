@@ -1,10 +1,33 @@
 // src/pages/MembershipManager.js
 import React, { useState, useEffect, useContext} from 'react';
 import { Input, Button, message, Modal, Form, Tabs, Table} from 'antd';
-import axios from 'axios';
 import 'antd/dist/reset.css';
 import FileUploader from '../components/upload';
 import { AuthContext } from '../components/context';
+// import axios from 'axios';
+import axios from '../utils/axios';
+
+
+const styles = {
+  container: {
+    padding: '24px',  // 整体内边距
+  },
+  tabs: {
+    marginBottom: '24px',  // Tabs 下方间距
+  },
+  tabContent: {
+    marginTop: '24px',     // 每个 tab 内容的上方间距
+  },
+  searchSection: {
+    marginBottom: '20px',  // 搜索区域下方间距
+  },
+  tableSection: {
+    marginTop: '20px',     // 表格上方间距
+  },
+  formSection: {
+    marginTop: '40px',     // 表单上方间距
+  }
+};
 
 
 const MembershipManager = () => {
@@ -13,10 +36,10 @@ const MembershipManager = () => {
   const [registerForm] = Form.useForm();
   const [consumeForm] = Form.useForm();
   const [editForm] = Form.useForm();
-  // // ref
-  // const registerFormRef = useRef(null);
-  // const consumeFormRef = useRef(null);
+
+  // const registerFormRef = useRef(null); ref static var and not rendering
   const [loading, setLoading] = useState(false);
+
   // flag for useEffect
   const [updateSuccess, setUpdateSuccess] = useState(false);
 
@@ -42,17 +65,16 @@ const MembershipManager = () => {
     total: 0
   });
 
-  // const token = localStorage.getItem('token')
-  const { token} = useContext(AuthContext);
   const { api_url } = useContext(AuthContext);
   const membershipUrl = `${api_url}/membership`;
   const uploadUrl = `${api_url}/component/upload`;
-  const header = {
-    'Content-Type': 'application/json',
-    'Authorization':  `Bearer ${token}`
-  };
+  
+  // const { token} = useContext(AuthContext);
+  // const header = {
+  //   'Content-Type': 'application/json',
+  //   'Authorization':  `Bearer ${token}`
+  // };
 
-  const cors = {withCredential: true};
 
   const onFinishFailed = (errorInfo) => {
     console.log('Failed:', errorInfo);
@@ -61,11 +83,9 @@ const MembershipManager = () => {
     // }
     console.log('验证失败信息:', errorInfo);
     console.log('失败字段:', errorInfo.errorFields);
-    // 显示具体错误信息
     errorInfo.errorFields.forEach(field => {
       console.log(`字段 ${field.name[0]} 错误:`, field.errors);
     });
-    // message.error('Please check the form fields and try again.');
   };
 
   // set pagination
@@ -95,13 +115,14 @@ const MembershipManager = () => {
       setLoading(true);
       try {
         const response = await axios.get(`${membershipUrl}/list`,
-          {
-            headers: header
-          },
-          cors
+          // {
+          //   headers: header,
+          //   withCredentials: true
+          // },
         );
         console.log("fetchUnits data ", response.data.data)
         setMembers(response.data.data);
+
         // set pagination
         setPagination( prev => ({
           ...prev,
@@ -127,7 +148,6 @@ const MembershipManager = () => {
       setUpdateSuccess(false); // Reset after fetching
       return () => {
         console.log("Cleanup: Component will unmount");
-       //  setLoading(false);
       }
      }, [updateSuccess]);
 
@@ -142,18 +162,12 @@ const MembershipManager = () => {
 
     const searchValue = String(memberInfo || '').trim();
 
-    // if (!memberInfo || memberInfo.trim() === '') {
     if (!searchValue) {
       message.error('请输入会员信息');
       return;
     }
     try {
-      // 性能问题
-      // const index = members.findIndex(member =>
-      //      member.name.toLowerCase() === memberInfo.toLowerCase() || 
-      //      member.phone.toString().toLowerCase() === memberInfo.toString().toLowerCase());
-
-      // 安全地比较字符串
+      
       const index = members.findIndex(member => {
       // 确保所有值都是字符串并转换为小写
       const memberName = String(member.name || '').toLowerCase();
@@ -188,7 +202,7 @@ const MembershipManager = () => {
       message.error('请选择会员');
       return;
     }
-    // record is current row / member_index change ,but record is not change
+    // record is current row
     console.log("需要更新的会员 record  ", record);
 
     // reset editForm
@@ -306,10 +320,10 @@ const MembershipManager = () => {
               phone: values.phone,
               birth: values.birth,
             },
-            {
-              headers: header
-            },
-            cors
+            // {
+            //   headers: header,
+            //   withCredentials: true
+            // },
           );
             if (createResponse.status === 200 && createResponse.data.status === 0) {
               message.success('会员信息更新成功');
@@ -323,17 +337,16 @@ const MembershipManager = () => {
         } 
         else if (modalType === 'register') {
             // const formData = registerForm.getFieldsValue();
-            // console.log("registerForm ", formData);
             const createResponse = await axios.post(`${membershipUrl}/on_register`, 
             {
               name: values.name,
               phone: values.phone,
               birth: values.birth,
             },
-            {
-              headers: header
-            },
-            cors
+            // {
+            //   headers: header,
+            //   withCredentials: true
+            // },
           );
             if (createResponse.status === 200 && createResponse.data.status === 0) {
               message.success('会员创建成功');
@@ -355,7 +368,6 @@ const MembershipManager = () => {
         } else {
           resetForm(editForm);
         }
-        // formref.current = null;
       } catch (error) {
         if (error.errorFields) {
           error.errorFields.forEach(field => {
@@ -366,7 +378,6 @@ const MembershipManager = () => {
         }
       }
     };
-
 
     const handleConsume = async (values) => {
 
@@ -379,9 +390,6 @@ const MembershipManager = () => {
         }
         message.success('表格提交成功 !');
 
-        // 性能问题
-        // const index = members.findIndex(member =>
-        //   parseInt(member.phone) === parseInt(values.phone));
         const index = members.findIndex(member => {
           const memberPhone = parseInt(member.phone);
           const searchPhone = parseInt(values.phone);
@@ -400,10 +408,10 @@ const MembershipManager = () => {
                   "discount": parseInt(values.discount),
                   "consume": parseInt(values.consume),
                 },
-              {
-                headers: header
-              },
-              cors
+              // {
+              //   headers: header,
+              //   withCredentials: true
+              // },
               );
   
             if (consume_resp.status === 200 && consume_resp.data.status === 0) {
@@ -424,10 +432,7 @@ const MembershipManager = () => {
       // debugger;
 
       try {
-        // 性能问题
-        // const index = members.findIndex(member =>
-        //      member.name.toLowerCase() === memberInfo.toLowerCase() || 
-        //      member.phone.toString().toLowerCase() === memberInfo.toString().toLowerCase());
+        
         const index = members.findIndex(member => {
             // lowercase
             const memberName = String(member.name || '').toLowerCase();
@@ -443,12 +448,10 @@ const MembershipManager = () => {
             { 
               params: {
                 member_id: members[index].member_id
-              }
+              },
+              // headers: header,
+              // withCredentials: true
             },
-            {
-              headers: header
-            },
-            cors
           );
           const charge_records = charge_resp.data.data;
           setChargeRecord(charge_records);
@@ -464,11 +467,9 @@ const MembershipManager = () => {
               params: {
                 member_id: members[index].member_id
               },
-            }, 
-            {
-              headers: header
+              // headers: header,
+              // withCredentials: true
             },
-            cors
           );
           const consume_records = consume_resp.data.data;
           setConsumeRecord(consume_records);
@@ -610,14 +611,17 @@ const MembershipManager = () => {
       key: "1",
       label: "支付管理",
       children: (
-        <>
-          <Input
-            placeholder="输入会员名称或者手机号"
-            value={memberInfo}
-            onChange={(e) => setMemberInfo(e.target.value)}
-            style={{ width: 200, marginRight: 10 }}
-          />
-          <Button type="primary" onClick={checkMember}>查询会员</Button>
+        <div style={styles.tabContent}>
+          <div style={styles.searchSection}>
+              <Input
+                placeholder="输入会员名称或者手机号"
+                value={memberInfo}
+                onChange={(e) => setMemberInfo(e.target.value)}
+                style={{ width: 200, marginRight: 10 }}
+              />
+              <Button type="primary" onClick={checkMember}>查询会员</Button>
+          </div>
+
           <Table 
             columns={member_columns}
             dataSource={filterMemberInfo}
@@ -629,10 +633,7 @@ const MembershipManager = () => {
             style={{ width: '100%', borderCollapse: 'collapse' }}
           />
 
-          <div>
-          {/* <label> 充值/消费 </label> */}
           {/* <Form form={form} onFinish={onFinish} onFinishFailed={onFinishFailed} ref={formref} onSubmit={handleSubmit} style={{ marginTop: '40px' }}> */}
-          {/* <Form onFinish={onFinish} onFinishFailed={onFinishFailed} ref={consumeFormRef} style={{ marginTop: '40px' }}> */}
           {/* when Button is moved to Form and onFinish can be replaced  handleConsume */}
           <Form 
             form={consumeForm} 
@@ -703,74 +704,80 @@ const MembershipManager = () => {
               </Button>
             </Form.Item>
           </Form>
-          {/* <Button type="primary" onClick={handleConsume}>
-              生效
-          </Button> */}
         </div>
-        </>
+        // </>
       ),
     },
     {
       key: "2",
       label: "交易记录",
       children: (
-        <>
-          <Input
-            placeholder='输入手机号码或者名字'
-            onChange={(e) => setMemberInfo(e.target.value)}
-            style={ { marginBottom: 20, width: 300} }
-          />
-          <Button type="primary" onClick={handleSearch}>查询记录</Button>
-          <Table 
-            columns={charge_record_columns}
-            dataSource={chargeRecord}
-            rowKey={(record) => record.created_at}
-            loading={loading}
-            pagination={ {
-              pagesize: pagination.pageSize, 
-              current: pagination.current,
-              total: chargeRecord.length || 0,
-              showSizeChanger: true,
-              showQuickJumper: true,
-              // pageSize must in pageSizeOptions and be all set 
-              pageSizeOptions: ['5', '10', '20', '50'],
-              onChange: handlePageChange,
-            }}
-          />
-          <Table 
-            columns={consume_record_columns}
-            dataSource={consumeRecord}
-            rowKey={(record) => record.created_at}
-            loading={loading}
-            pagination={ {
-              pagesize: pagination.pageSize, 
-              current: pagination.current,
-              total: consumeRecord.length || 0,
-              showSizeChanger: true,
-              showQuickJumper: true,
-              pageSizeOptions: ['5', '10', '20', '50'],
-              onChange: handlePageChange,
-            }}
-          />
+        <div style={styles.tabContent}>
+          <div style={styles.searchSection}>
+            <Input
+              placeholder='输入手机号码或者名字'
+              onChange={(e) => setMemberInfo(e.target.value)}
+              style={ { marginBottom: 20, width: 300} }
+            />
+            <Button type="primary" onClick={handleSearch}>查询记录</Button>
+          </div>
 
-        </>
+          <div style={styles.tableSection}>
+              <Table 
+                columns={charge_record_columns}
+                dataSource={chargeRecord}
+                rowKey={(record) => record.created_at}
+                loading={loading}
+                pagination={ {
+                  pagesize: pagination.pageSize, 
+                  current: pagination.current,
+                  total: chargeRecord.length || 0,
+                  showSizeChanger: true,
+                  showQuickJumper: true,
+                  // pageSize must in pageSizeOptions and be all set 
+                  pageSizeOptions: ['5', '10', '20', '50'],
+                  onChange: handlePageChange,
+                }}
+              />
+          </div>
+          <div style={styles.tableSection}>
+              <Table 
+                columns={consume_record_columns}
+                dataSource={consumeRecord}
+                rowKey={(record) => record.created_at}
+                loading={loading}
+                pagination={ {
+                  pagesize: pagination.pageSize, 
+                  current: pagination.current,
+                  total: consumeRecord.length || 0,
+                  showSizeChanger: true,
+                  showQuickJumper: true,
+                  pageSizeOptions: ['5', '10', '20', '50'],
+                  onChange: handlePageChange,
+                }}
+              />
+          </div>
+        </div>
       ),
     },
     {
       key: "3",
       label: "批量上传",
       children: (
-        <>
-          <FileUploader
-            uploadUrl={uploadUrl}
-            table="membership"
-            onUploadSuccess={onUpload}
-          />
-          <Table 
-            columns={upload_columns}
-            dataSource={uploadRecords}
-            rowKey={(record) => record.phone}
-            loading={loading}
+        <div style={styles.tabContent}>
+          <div style={styles.searchSection}>
+              <FileUploader
+                uploadUrl={uploadUrl}
+                table="membership"
+                onUploadSuccess={onUpload}
+              />
+          </div>
+          <div style={styles.tableSection}>
+            <Table 
+              columns={upload_columns}
+              dataSource={uploadRecords}
+              rowKey={(record) => record.phone}
+              loading={loading}
             pagination={ {
               pagesize: pagination.pageSize, 
               current: pagination.current,
@@ -779,18 +786,22 @@ const MembershipManager = () => {
               showQuickJumper: true,
               pageSizeOptions: ['5', '10', '20', '50'],
               onChange: handlePageChange,
-            }}
-          />
-        </>
-
+              }}
+            />
+          </div>
+        </div>
       ),
     },
   ];
-
+  
   return (
-    <div style={{ padding: '20px' }}>
-      <h2>会员管理</h2>
-      <Tabs defaultActiveKey='1' items={items} />
+    <div style={styles.container}>
+      {/* <h2>会员管理</h2> */}
+      <Tabs 
+        defaultActiveKey='1' 
+        items={items} 
+        style={styles.tabs}
+      />
       {renderModal()}
     </div>
   );

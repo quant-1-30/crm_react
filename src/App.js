@@ -8,7 +8,7 @@ import MembershipManager from "./pages/Membership";
 import LoginPage from "./pages/Login";
 import DashboardPage from "./pages/Dashboard";
 import CoporateManager from "./pages/Coprate";
-import DisplayPieChart from "./pages/Analyze";
+import DisplayChart from "./pages/Analyze";
 import { ProtectedRoute, AuthProvider } from "./components/context";
 import AppLayout from "./pages/Layout";
 
@@ -34,17 +34,23 @@ function App() {
             } />
             <Route path="/membership" element={
               <ProtectedRoute>
-                <MembershipManager />
+                <AppLayout>
+                  <MembershipManager />
+                </AppLayout>
               </ProtectedRoute>
             } />
             <Route path="/coporate" element={
               <ProtectedRoute>
-                <CoporateManager />
+                <AppLayout>
+                  <CoporateManager />
+                </AppLayout>
               </ProtectedRoute>
             } />
-            <Route path="/stats" element={
+            <Route path="/analyze" element={
               <ProtectedRoute>
-                <DisplayPieChart />
+                <AppLayout>
+                  <DisplayChart />
+                </AppLayout>
               </ProtectedRoute>
             } />
 

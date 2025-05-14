@@ -1,25 +1,55 @@
 // src/pages/AgreementUnits.js
 import React, { useState, useEffect, useContext } from 'react';
-import { Input, Table, message, Button, Select } from 'antd';
-import axios from 'axios';
+import { Input, Table, message, Button, Select, Card, Row, Col, Space, Typography } from 'antd';
+
 import 'antd/dist/reset.css';
 import FileUploader from '../components/upload';
 import { AuthContext } from '../components/context';
 // import { tr } from 'date-fns/locale';
+// import axios from 'axios';
+import axios from '../utils/axios';
 
 const { Option } = Select;
+const {Title} = Typography;
+
+const styles = {
+  container: {
+    padding: '24px',
+  },
+  card: {
+    marginBottom: '24px',
+  },
+  searchSection: {
+    marginBottom: '20px',
+  },
+  tableSection: {
+    marginTop: '20px',
+  },
+  uploadSection: {
+    marginTop: '24px',
+  }
+};
 
 const CoporateManager = () => {
 
-  const { token } = useContext(AuthContext);
+  // context and const
   const { api_url } = useContext(AuthContext);
   const coporateUrl = `${api_url}/coporate`;
   const uploadUrl = `${api_url}/component/upload`;
 
-  const header = {
-    'Content-Type': 'application/json',
-    'Authorization':  `Bearer ${token}`
-  };
+  // pagination
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 5,
+    total: 0
+  });
+
+  // // header
+  // const { token } = useContext(AuthContext);
+  // const header = {
+  //   'Content-Type': 'application/json',
+  //   'Authorization':  `Bearer ${token}`
+  // };
 
   const [units, setUnits] = useState([]);
   const [filteredUnits, setFilteredUnits] = useState([]);
@@ -36,8 +66,11 @@ const CoporateManager = () => {
     const fetchUnits = async () => {
       setLoading(true);
       try {
-        // const response = await axios.get('http://localhost:8100/coporate/list'
-        const response = await axios.get(`${coporateUrl}/list`
+        const response = await axios.get(`${coporateUrl}/list`,
+          // {
+          //   headers: header,
+          //   withCredentials: true
+          // },
         );
         if (response.data.status === 0) {
           console.log("response ", response.data.data);
@@ -61,8 +94,32 @@ const CoporateManager = () => {
     }
   }, [updateSuccess]);
 
+  const handlePageChange = (pagination, filters, sorter) => {
+    console.log("handlePageChange filters ", filters);
+    console.log("handlePageChange sorter ", sorter);
+ 
+    // // 处理排序
+    // let sortedData = [...chargeRecord]; // 创建数据副本
+    // if (sorter.field && sorter.order) {
+    //   sortedData.sort((a, b) => {
+    //     const field = sorter.field;
+    //     const order = sorter.order;
+        
+    //     if (order === 'ascend') {
+    //       return a[field] > b[field] ? 1 : -1;
+    //     } else {
+    //       return a[field] < b[field] ? 1 : -1;
+    //     }
+    setPagination({
+      ...pagination,
+      total: pagination.total
+    });
+  };
+
   const handleChange = (value) => {
-    setSelectedValue(value);
+    // value to table
+    const table = value === '协议单位' ? 'coporate' : 'coporate_info';
+    setSelectedValue(table);
   };
 
   // input 
@@ -81,20 +138,24 @@ const CoporateManager = () => {
         console.log("handleSearch ", units[index]);
   
         try {
-          // const response = await axios.get('http://localhost:8100/coporate/detail',
           const response = await axios.get(`${coporateUrl}/detail`,
             {
               params: {
                 name: units[index].name
               },
-            },
-            {
-              headers: header
+              // headers: header,
+              // withCredentials: true
             },
           );
           if (response.data.data) {
             setFilteredInfoUnits(response.data.data)
             console.log("detail response ", response.data.data);
+            // set pagination
+            setPagination( prev => ({
+              ...prev,
+              total: response.data.data.length
+            }));
+
           } else{
             message.error("协议单位价格数据为空");
           }
@@ -114,10 +175,9 @@ const CoporateManager = () => {
 
   const processInput = (value) => {
     // Remove leading and trailing spaces
+    // processed = processed.replace(/['"]/g, ''); // Remove quotes if you don't want them
     let processed = value.trim();
     
-    // Remove special characters if needed
-    // processed = processed.replace(/['"]/g, ''); // Remove quotes if you don't want them
     return processed;
   };
 
@@ -158,56 +218,88 @@ const CoporateManager = () => {
   ];
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h2>协议单位列表</h2>
-      <Input 
-        placeholder="搜索协议单位"
-        // onMouseEnter={setUnits}
-        // onChange={(e) => setCoporateName(e.target.value)}
-        onChange={(e) => setCoporateName(processInput(e.target.value))}
-        style={ {marginBottom: 20, width: 300 }}
-      />
-      <Button type="primary" onClick={handleSearch}>查询</Button>
-      <Table
-        columns={coporate_columns}
-        dataSource={filteredUnits}
-        loading={loading}
-        rowKey={(record) => record.name}
-        pagination = {false}
-        style={{ marginBottom: 20 }}
-      />
-    <h2>折扣信息</h2>
-      {/* <Input 
-        placeholder="搜索协议单位"
-        // onMouseEnter={setUnits}
-        onChange={(e) => setCoporateName(e.target.value)}
-        style={ {marginBottom: 20, width: 300 }}
-      />
-      <Button type="primary" onClick={handleSearch}>查询</Button>  */}
-      <Table
-        columns={info_columns}
-        dataSource={filteredInfoUnits}
-        loading={loading}
-        rowKey={(record) => `${record.name}-${record.price}`}
-        pagination={ {pagesize: 10, current: 1}}
-      />
-      <h2>文件上传示例</h2>
-      <Select
-        style={{ width: 200 }}
-        placeholder="Select an option"
-        onChange={handleChange}
-        value={selectedValue}
-      >
-        <Option value="协议单位"></Option>
-        <Option value="协议单位价格"></Option>
-      </Select>
+      <div style={styles.container}>
+        <Row gutter={[24, 24]}>
+          {/* 协议单位列表 */}
+          <Col span={24}>
+            <Card 
+              title={<Title level={5}>协议单位列表</Title>}
+              style={styles.card}
+            >
+              <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                <Space style={styles.searchSection}>
+                  <Input 
+                    placeholder="搜索协议单位"
+                    onChange={(e) => setCoporateName(processInput(e.target.value))}
+                    style={{ width: 300 }}
+                  />
+                  <Button type="primary" onClick={handleSearch}>查询</Button>
+                </Space>
+  
+                <Table
+                  columns={coporate_columns}
+                  dataSource={filteredUnits}
+                  loading={loading}
+                  rowKey={(record) => record.name}
+                  pagination={false}
+                />
+              </Space>
+            </Card>
+          </Col>
 
-      <FileUploader
-        // uploadUrl="http://localhost:8100/component/upload"
-        uploadUrl={uploadUrl}
-        table={selectedValue}
-        onUploadSuccess={onUpload}
-      />
+        {/* 折扣信息 */}
+        <Col span={24}>
+          <Card 
+            title={<Title level={5}>折扣信息</Title>}
+            style={styles.card}
+          >
+            <Table
+              columns={info_columns}
+              dataSource={filteredInfoUnits}
+              loading={loading}
+              rowKey={(record) => `${record.name}-${record.price}`}
+              pagination={{ 
+                pagesize: pagination.pageSize, 
+                current: pagination.current,
+                total: filteredInfoUnits.length || 0,
+                showSizeChanger: true,
+                showQuickJumper: true,
+                // pageSize must in pageSizeOptions and be all set 
+                pageSizeOptions: ['5', '10', '20', '50'],
+                onChange: handlePageChange,
+              }}
+            />
+          </Card> 
+        </Col>
+
+        {/* 文件上传 */}
+        <Col span={24}>
+          <Card 
+            title={<Title level={4}>文件上传</Title>}
+            style={styles.card}
+          >
+            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+              <Space>
+                <Select
+                  style={{ width: 200 }}
+                  placeholder="选择上传类型"
+                  onChange={handleChange}
+                  value={selectedValue}
+                >
+                  <Option value="协议单位">协议单位</Option>
+                  <Option value="协议单位价格">协议单位价格</Option>
+                </Select>
+              </Space>
+
+              <FileUploader
+                uploadUrl={uploadUrl}
+                table={selectedValue}
+                onUploadSuccess={onUpload}
+              />
+            </Space>
+          </Card>
+        </Col>
+      </Row>
     </div>
   );
 };

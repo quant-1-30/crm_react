@@ -45,7 +45,6 @@ const LoginPage = () => {
     console.log('Success:', values);
     // backend
     try {
-        // const response = await axios.post("http://localhost:8100/home/on_login", {
         const response = await axios.post(`${homeUrl}/on_login`, {
             name: values.username,
             passwd: values.password,
@@ -55,10 +54,7 @@ const LoginPage = () => {
             console.log('Login successful: ', response.data);
             // JSON.stringify / JSON.parse 
 
-            // localStorage.setItem('token', response.data.data)
             login(response.data.data)
-
-            console.log("token", response.data.data)
             message.success('登陆成功');
             navigate("/dashboard"); // redirect to home
         } else {

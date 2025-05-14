@@ -1,7 +1,7 @@
 import React from 'react';
 import { Layout, Menu, Button, theme } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from './context';
+import { useAuth } from '../components/context';
 import {
   DashboardOutlined,
   UserOutlined,
@@ -37,7 +37,7 @@ const AppLayout = ({ children }) => {
       label: '企业管理',
     },
     {
-      key: '/stats',
+      key: '/analyze',
       icon: <BarChartOutlined />,
       label: '统计分析',
     },

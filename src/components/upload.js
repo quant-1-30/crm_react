@@ -1,19 +1,18 @@
 import React, {useState, useContext} from 'react';
 import { Upload, Button, message } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
-import axios from 'axios';
-import { AuthContext } from './context';
-  
-const cors = {withCredential: true};
-
-// const token = localStorage.getItem('token');
+// import axios from 'axios';
+import axios from '../utils/axios';
 
 
 const FileUploader = ({uploadUrl, table, onUploadSuccess}) => {
-  const { token } = useContext(AuthContext);
+  console.log("uploading to uploadUrl and table:", uploadUrl, table);
+
+  // replace default Content-Type in utils/axios.js
+  // const { token } = useContext(AuthContext);
   const headers = {
     'Content-Type': "multipart/form-data",
-    'Authorization':  `Bearer ${token}`
+    // 'Authorization':  `Bearer ${token}`
   };
 
   const [fileList, setFileList] = useState([]);
@@ -43,23 +42,22 @@ const FileUploader = ({uploadUrl, table, onUploadSuccess}) => {
       formData.append("files", file);
     });
     formData.append("table", table);
+
     console.log("formData entries", Array.from(formData.entries()));
 
-    console.log("uploading to:", uploadUrl);
-    console.log("token", token);
 
     try {
       const response = await axios.post(uploadUrl, 
         formData, 
       {
-        headers: headers
+        headers: headers,
+        // withCredentials: true
       },
-      cors,
     );
     console.log("upload response ", response.data);
     if (parseInt(response.data.status) === 0) {
         onUploadSuccess(response.data.data);
-        message.success("文件上传状态 ", response.data.success);
+        message.success("文件上传成功 ", response.data.success);
     } else {
       message.error('文件上传失败');
     }

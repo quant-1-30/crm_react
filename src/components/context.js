@@ -29,14 +29,6 @@ export const AuthProvider = ({ children }) => {
     navigate('/login');
   };
 
-  // // Redirect to dashboard if user is authenticated (token is present)
-  // useEffect(() => {
-  //     if (token) {
-  //       navigate('/dashboard');
-  //     }
-  //   }, [token, navigate]);
-  
-
   return (
     <AuthContext.Provider value={{ api_url, token, login, logout }}>
       {children}
@@ -44,19 +36,19 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// // 2. Custom hook for consuming auth context
-// export const useAuth = () => {
-//   const context = useContext(AuthContext);
-//   if (!context) {
-//     throw new Error('useAuth must be used within AuthProvider');
-//   }
-//   return context;
-// };
+// 2. Custom hook for consuming auth context
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
+};
 
 // 3. Logout Button Component
 export const LogoutButton = () => {
-  // const { logout } = useAuth();
-  const { logout } = useContext(AuthContext);
+  // const { logout } = useContext(AuthContext);
+  const { logout } = useAuth();
   return (
     <button
       onClick={logout}

@@ -1,114 +1,174 @@
 import React, {useState, useContext} from 'react';
-import axios from 'axios';
-import { message, DatePicker, Select, Button} from 'antd';
+import { message, DatePicker, Select, Button, Typography, Row, Col, Card, Space} from 'antd';
 import { Histogram } from '../components/chart';
 import 'antd/dist/reset.css';
-// import DatePicker from 'react-datepicker';
+import { CalendarOutlined, BarChartOutlined, ReloadOutlined } from '@ant-design/icons';
 import { AuthContext } from '../components/context';
-
-const cors = {withCredential: true};
+// import axios from 'axios';
+import axios from '../utils/axios';
 
 const { Option } = Select;
+const { RangePicker } = DatePicker;
+const { Title } = Typography;
 
-const DisplayPieChart = () => {
-  const { token } = useContext(AuthContext);
+const styles = {
+  container: {
+    padding: '24px',
+  },
+  card: {
+    marginBottom: '24px',
+  },
+  filterSection: {
+    marginBottom: '24px',
+    padding: '16px',
+    background: '#fafafa',
+    borderRadius: '8px',
+  },
+  chartSection: {
+    marginTop: '24px',
+  },
+  chartCard: {
+    height: '100%',
+  }
+};
+
+
+const DisplayChart = () => {
+
   const { api_url } = useContext(AuthContext);
-  const statsUrl = `${api_url}/stats`;
+  const analyze_url = `${api_url}/analyzer`;
 
-  const header = {
-    'Content-Type': 'application/json',
-    'Authorization':  `Bearer ${token}`
-  };
+  // const { token } = useContext(AuthContext);
+  // const cors = {withCredential: true};
+  // const header = {
+  //   'Content-Type': 'application/json',
+  //   'Authorization':  `Bearer ${token}`
+  // };
 
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
+  const [dateRange, setDateRange] = useState([]);
 
+  const [selectedValue, setSelectedValue]  = useState( []);
   const [chargeunits, setChargeUnits] = useState([]);
   const [consumeunits, setConsumeUnits] = useState([]);
-  const [selectedValue, setSelectedValue]  = useState( []);
-//   const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const fetchUnits = async () => {
-    console.log("startdate ", startDate.valueOf());
-    console.log("endDate ", endDate.valueOf());
-    console.log("freq", selectedValue);
-    // setLoading(true);
+
+    if (!dateRange[0] || !dateRange[1]) {
+      message.error('请选择日期范围');
+      return;
+    }   
+    
+    setLoading(true);
     try {
-      // const response = await axios.post('http://localhost:8100/stats/aggregate',
-      const response = await axios.post(`${statsUrl}/aggregate`,
+      const response = await axios.post(`${analyze_url}/stats`,
         {
-          start_date: Math.floor(startDate.valueOf() / 1000),
-          end_date: Math.floor(endDate.valueOf() / 1000),
-          freq: selectedValue
+          // start_date: Math.floor(dateRange[0].valueOf() / 1000),
+          // end_date: Math.floor(dateRange[1].valueOf() / 1000),
+          startDate: dateRange?.[0]?.format('YYYY-MM-DD'),
+          endDate: dateRange?.[1]?.format('YYYY-MM-DD'),
+          frequency: selectedValue
         },
-        {
-          headers: header
-        },
-        cors
+        // {
+        //   headers: header,
+        //   withCredentials: true
+        // },
       );
-      console.log("response ", response.data.data);
-      setChargeUnits(response.data.data.charge);
-      setConsumeUnits(response.data.data.consume);
+      if (response.data.status === 0) {
+        console.log("response ", response.data.data);
+        setChargeUnits(response.data.data.charge);
+        setConsumeUnits(response.data.data.consume);
+      } else {
+        message.error('获取统计数据发生错误');
+      }
     } catch (error) {
-      message.error('获取统计数据发生错误');
+      message.error('统计接口发生错误');
     } finally {
-    //   setLoading(false);
+      setLoading(false);
     }
   };
 
-  // const onChange = (date, dateString) => {
-  //   setDate(date);
-  //   console.log(dateString);
-  // };
   const handleFreqChange = (value) => {
     setSelectedValue(value);
   };
-  
-  return (
-    <div>
-         <h2> 统计范围 </h2>
-         <div style={{ display: 'flex', gap: '10px' }}>
-           <DatePicker
-             selected={startDate}
-             onChange={(date) => setStartDate(date)}
-             selectsStart
-             startDate={startDate}
-             endDate={endDate}
-             dateFormat="yyyy/MM/dd"
-           />
-           <DatePicker
-             selected={endDate}
-             onChange={(date) => setEndDate(date)}
-             selectsEnd
-             startDate={startDate}
-             endDate={endDate}
-             minDate={startDate}
-             dateFormat="yyyy/MM/dd"
-           />
-           <Select
-            style={{ width: 200 }}
-            placeholder="Select an option"
-            onChange={handleFreqChange}
-            value={selectedValue}
-          >
-            <Option value="day"></Option>
-            <Option value="week"></Option>
-          </Select>
-          <Button type="primary" onClick={fetchUnits}>
-            计算
-         </Button>
-         </div>
 
-      <h2>  直方图 </h2>
-      <h3> 充值 </h3>
-        <Histogram
-          data={chargeunits} />
-      {/* <h3> Histogram Consume</h3> */}
-      <h3> 消费 </h3>
-        <Histogram
-          data={consumeunits} />
+  return (
+    <div style={styles.container}>
+      <Card style={styles.card}>
+        <Title level={4}>统计分析</Title>
+        
+        {/* 筛选条件区域 */}
+        <div style={styles.filterSection}>
+          <Space size="large">
+            <Space>
+              <CalendarOutlined />
+              <RangePicker
+                value={dateRange}
+                onChange={setDateRange}
+                format="YYYY/MM/DD"
+                allowClear={false}
+              />
+            </Space>
+
+            <Space>
+              <BarChartOutlined />
+              <Select
+                style={{ width: 120 }}
+                placeholder="选择统计周期"
+                onChange={handleFreqChange}
+                value={selectedValue}
+              >
+                <Option value="day">按天</Option>
+                <Option value="week">按周</Option>
+              </Select>
+            </Space>
+
+            <Button 
+              type="primary" 
+              onClick={fetchUnits}
+              loading={loading}
+              icon={<ReloadOutlined />}
+            >
+              计算
+            </Button>
+          </Space>
+        </div>
+
+        {/* 图表区域 */}
+        <Row gutter={[24, 24]}>
+          <Col span={24}>
+            <Card 
+              title="充值分析" 
+              style={styles.chartCard}
+              loading={loading}
+            >
+              <Histogram 
+                data={chargeunits} 
+                xField="name" 
+                yField="value" 
+                namekey="充值" 
+              />
+            </Card>
+          </Col>
+          
+          <Col span={24}>
+            <Card 
+              title="消费分析" 
+              style={styles.chartCard}
+              loading={loading}
+            >
+              <Histogram 
+                data={consumeunits} 
+                xField="name" 
+                yField="value" 
+                namekey="消费" 
+              />
+
+            </Card>
+          </Col>
+        </Row>
+      </Card>
     </div>
   );
 };
-
-export default DisplayPieChart;
+export default DisplayChart;
