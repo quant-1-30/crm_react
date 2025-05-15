@@ -13,7 +13,6 @@ import axios from '../utils/axios';
 
 const Dashboard = () => {
 
-  const { RangePicker } = DatePicker;
   const [loading, setLoading] = useState(true);
 
   const [stats, setStats] = useState({
@@ -24,6 +23,8 @@ const Dashboard = () => {
   });
 
   const [recentActivities, setRecentActivities] = useState([]);
+
+  const { RangePicker } = DatePicker;
   const [dateRange, setDateRange] = useState(null);
   
   // pagination
@@ -56,10 +57,10 @@ const Dashboard = () => {
       // 获取统计数据
       const statsResponse = await axios.get('/dashboard/snapshot', 
     );
-      console.log("statsResponse.data", statsResponse.data.status);
       // debugger;
       if (statsResponse.data.status === 0) {
-        setStats(statsResponse.data.data);
+          console.log("statsResponse.data", statsResponse.data.data);
+          setStats(statsResponse.data.data);
       } else {
         message.error('获取快照数据失败');
       }
@@ -72,7 +73,6 @@ const Dashboard = () => {
             endDate: dateRange?.[1]?.format('YYYY-MM-DD')
           },
         });
-      console.log("activitiesResponse.data", activitiesResponse.data);
       if (activitiesResponse.data.status === 0) {
         setRecentActivities(activitiesResponse.data.data);
         // set pagination

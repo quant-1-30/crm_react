@@ -1,6 +1,6 @@
 // src/pages/MembershipManager.js
 import React, { useState, useEffect} from 'react';
-import { Input, Button, message, Modal, Form, Tabs, Table} from 'antd';
+import { Input, Button, message, Modal, Form, Tabs, Table, DatePicker} from 'antd';
 import 'antd/dist/reset.css';
 import FileUploader from '../components/upload';
 // import axios from 'axios';
@@ -37,7 +37,10 @@ const MembershipManager = () => {
 
   // const registerFormRef = useRef(null); ref static var and not rendering
   const [loading, setLoading] = useState(false);
-
+  
+  // date picker
+  const { RangePicker } = DatePicker;
+  const [dateRange, setDateRange] = useState(null);
   // flag for useEffect
   const [updateSuccess, setUpdateSuccess] = useState(false);
 
@@ -103,24 +106,24 @@ const MembershipManager = () => {
       try {
         const response = await axios.get('/membership/list',
         );
+        if (response.data.status === 0) {
         console.log("fetchUnits data ", response.data.data)
-        setMembers(response.data.data);
-
         // set pagination
+        setMembers(response.data.data);
         setPagination( prev => ({
           ...prev,
           total: response.data.data.length
-        }));
-        
+          }));
+        } else {
+          message.error('获取会员数据错误');
+        }
       } catch (error) {
         message.error(error);
-        message.error('获取会员数据时发生错误');
-
-        setMembers([]);
-        setPagination( prev => ({
-          ...prev,
-          total: 0
-        }));
+        // setMembers([]);
+        // setPagination( prev => ({
+        //   ...prev,
+        //   total: 0
+        // }));
       } finally {
         setLoading(false);
       }
@@ -304,15 +307,15 @@ const MembershipManager = () => {
               birth: values.birth,
             },
           );
-            if (createResponse.status === 200 && createResponse.data.status === 0) {
+          if (createResponse.data.status === 0) {
               message.success('会员信息更新成功');
               const obj = await createResponse.data.data
               console.log("update MemberInfo", obj);
               setFilterMemberInfo([obj]);
               setUpdateSuccess(true);
-            } else {
+          } else {
               message.error('会员创建失败, 请检查手机号是否已存在');
-            }
+          }
         } 
         else if (modalType === 'register') {
             // const formData = registerForm.getFieldsValue();
@@ -323,7 +326,7 @@ const MembershipManager = () => {
               birth: values.birth,
             },
           );
-            if (createResponse.status === 200 && createResponse.data.status === 0) {
+          if (createResponse.data.status === 0) {
               message.success('会员创建成功');
               const obj = await createResponse.data.data
               console.log("register MemberInfo", obj);
@@ -332,9 +335,9 @@ const MembershipManager = () => {
               console.log("members", members);
               setFilterMemberInfo([obj]);
               setUpdateSuccess(true);
-            } else {
+          } else {
               message.error('会员创建失败, 请检查手机号是否已存在');
-            }
+          }
         }
         // reset form
         setIsModalVisible(false);
@@ -384,7 +387,7 @@ const MembershipManager = () => {
                 },
               );
   
-            if (consume_resp.status === 200 && consume_resp.data.status === 0) {
+            if (consume_resp.data.status === 0) {
               message.success('操作成功');
               setUpdateSuccess(true);
             }else{
@@ -415,37 +418,49 @@ const MembershipManager = () => {
           const charge_resp = await axios.get('/membership/charge_detail',
             { 
               params: {
-                member_id: members[index].member_id
+                member_id: members[index].member_id,
+                startDate: dateRange?.[0]?.format('YYYY-MM-DD'),
+                endDate: dateRange?.[1]?.format('YYYY-MM-DD')
               },
             },
           );
-          const charge_records = charge_resp.data.data;
-          setChargeRecord(charge_records);
-          // set pagination
-          setPagination( prev => ({
-            ...prev,
-            total: charge_records.length
-          }));
+          if (charge_resp.data.status === 0) {
+            const charge_records = charge_resp.data.data;
+            setChargeRecord(charge_records);
+            // set pagination
+            setPagination( prev => ({
+              ...prev,
+              total: charge_records.length
+            }));
+          }else{
+            message.error('获取充值记录错误');
+          }
 
           // consume_detail
           const consume_resp = await axios.get('/membership/consume_detail',
             { 
               params: {
-                member_id: members[index].member_id
+                member_id: members[index].member_id,
+                startDate: dateRange?.[0]?.format('YYYY-MM-DD'),
+                endDate: dateRange?.[1]?.format('YYYY-MM-DD')
               },
             },
           );
-          const consume_records = consume_resp.data.data;
-          setConsumeRecord(consume_records);
-          // set pagination
-          setPagination( prev => ({
-            ...prev,
-            total: consume_records.length
-          }));
+          if (consume_resp.data.status === 0) {
+            const consume_records = consume_resp.data.data;
+            setConsumeRecord(consume_records);
+            // set pagination
+            setPagination( prev => ({
+               ...prev,
+               total: consume_records.length
+            }));
+          }else{
+            message.error('获取消费记录错误');
+          }
         }
       } catch (error) {
         message.error(error);
-        message.error('获取消费数据时发生错误');
+        message.error('数据接口错误');
       } finally {
         setLoading(false);
       }
@@ -676,11 +691,15 @@ const MembershipManager = () => {
       label: "交易记录",
       children: (
         <div style={styles.tabContent}>
-          <div style={styles.searchSection}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16, marginTop: 16 }}>
+            <RangePicker 
+              onChange={setDateRange}
+              style={{ width: 300, marginRight: 16 }}
+            />
             <Input
               placeholder='输入手机号码或者名字'
               onChange={(e) => setMemberInfo(e.target.value)}
-              style={ { marginBottom: 20, width: 300} }
+              style={{ width: 300, marginRight: 16 }}
             />
             <Button type="primary" onClick={handleSearch}>查询记录</Button>
           </div>

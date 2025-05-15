@@ -59,9 +59,9 @@ const DisplayChart = () => {
         },
       );
       if (response.data.status === 0) {
-        console.log("response ", response.data.data);
-        setChargeUnits(response.data.data.charge);
-        setConsumeUnits(response.data.data.consume);
+          console.log("response ", response.data.data);
+          setChargeUnits(response.data.data.charge);
+          setConsumeUnits(response.data.data.consume);
       } else {
         message.error('获取统计数据发生错误');
       }

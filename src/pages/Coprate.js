@@ -56,9 +56,9 @@ const CoporateManager = () => {
         const response = await axios.get('/coporate/list');
 
         if (response.data.status === 0) {
-          console.log("response ", response.data.data);
-          setUnits(response.data.data);
-          setFilteredUnits(response.data.data)
+            console.log("response ", response.data.data);
+            setUnits(response.data.data);
+            setFilteredUnits(response.data.data)
         } else{
           message.error("协议单位数据为空");
         }

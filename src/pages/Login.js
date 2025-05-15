@@ -86,7 +86,7 @@ const LoginPage = () => {
             {"phone": phone}
         );
         console.log("send sms ", response)
-        if (response.status === 200) {
+        if (response.data.status === 0) {
             message.success('验证码发送成功');
             setCountdown(60);                         // ← 点击成功后启动 60s 倒计时
         } else {
@@ -108,7 +108,7 @@ const LoginPage = () => {
              verify_code: values.verify_code
             }
         );
-        if (response.status === 200 && response.data.status === 0) {
+        if (response.data.status === 0) {
             message.success('注册成功, 请登陆');
             setActiveTab('login')
 
@@ -129,7 +129,7 @@ const LoginPage = () => {
              verify_code: values.verify_code
             }
         );
-        if (response.status === 200 && response.data.status === 0) {
+        if (response.data.status === 0) {
             message.success('重置成功, 请登陆');
             setActiveTab('login')
 
