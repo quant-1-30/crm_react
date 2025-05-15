@@ -153,7 +153,6 @@ const MembershipManager = () => {
       return;
     }
     try {
-      
       const index = members.findIndex(member => {
       // 确保所有值都是字符串并转换为小写
       const memberName = String(member.name || '').toLowerCase();
@@ -402,62 +401,68 @@ const MembershipManager = () => {
     };
 
     const handleSearch = async () => {
+    
+      const searchValue = String(memberInfo || '').trim();
       // debugger;
-
+      console.log("handleSearch memberInfo ", searchValue);
       try {
         const index = members.findIndex(member => {
             // lowercase
             const memberName = String(member.name || '').toLowerCase();
             const memberPhone = String(member.phone || '').toLowerCase();
-            const searchTerm = memberInfo.toLowerCase();
+            const searchTerm = searchValue.toLowerCase();
             return memberName === searchTerm || memberPhone === searchTerm;
         })
 
         console.log("handleSearch index ", index);
-        if (index !== -1){
-          const charge_resp = await axios.get('/membership/charge_detail',
-            { 
-              params: {
-                member_id: members[index].member_id,
-                startDate: dateRange?.[0]?.format('YYYY-MM-DD'),
-                endDate: dateRange?.[1]?.format('YYYY-MM-DD')
-              },
-            },
-          );
-          if (charge_resp.data.status === 0) {
-            const charge_records = charge_resp.data.data;
-            setChargeRecord(charge_records);
-            // set pagination
-            setPagination( prev => ({
-              ...prev,
-              total: charge_records.length
-            }));
-          }else{
-            message.error('获取充值记录错误');
-          }
-
-          // consume_detail
-          const consume_resp = await axios.get('/membership/consume_detail',
-            { 
-              params: {
-                member_id: members[index].member_id,
-                startDate: dateRange?.[0]?.format('YYYY-MM-DD'),
-                endDate: dateRange?.[1]?.format('YYYY-MM-DD')
-              },
-            },
-          );
-          if (consume_resp.data.status === 0) {
-            const consume_records = consume_resp.data.data;
-            setConsumeRecord(consume_records);
-            // set pagination
-            setPagination( prev => ({
-               ...prev,
-               total: consume_records.length
-            }));
-          }else{
-            message.error('获取消费记录错误');
-          }
+        if (index === -1) {
+          message.error('未找到会员信息');
+          return;
         }
+
+        const charge_resp = await axios.get('/membership/charge_detail',
+          { 
+            params: {
+              member_id: members[index].member_id,
+              startDate: dateRange?.[0]?.format('YYYY-MM-DD'),
+              endDate: dateRange?.[1]?.format('YYYY-MM-DD')
+            },
+          },
+        );
+        if (charge_resp.data.status === 0) {
+          const charge_records = charge_resp.data.data;
+          setChargeRecord(charge_records);
+          // set pagination
+          setPagination( prev => ({
+            ...prev,
+            total: charge_records.length
+          }));
+        }else{
+          message.error('获取充值记录错误');
+        }
+
+        // consume_detail
+        const consume_resp = await axios.get('/membership/consume_detail',
+          { 
+            params: {
+              member_id: members[index].member_id,
+              startDate: dateRange?.[0]?.format('YYYY-MM-DD'),
+              endDate: dateRange?.[1]?.format('YYYY-MM-DD')
+            },
+          },
+        );
+        if (consume_resp.data.status === 0) {
+          const consume_records = consume_resp.data.data;
+          setConsumeRecord(consume_records);
+          // set pagination
+          setPagination( prev => ({
+             ...prev,
+             total: consume_records.length
+          }));
+        }else{
+          message.error('获取消费记录错误');
+        }
+
       } catch (error) {
         message.error(error);
         message.error('数据接口错误');
@@ -698,6 +703,7 @@ const MembershipManager = () => {
             />
             <Input
               placeholder='输入手机号码或者名字'
+              value={memberInfo}
               onChange={(e) => setMemberInfo(e.target.value)}
               style={{ width: 300, marginRight: 16 }}
             />
