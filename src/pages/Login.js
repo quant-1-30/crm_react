@@ -1,13 +1,17 @@
-import React, { useState, useContext, useRef, useEffect } from 'react';
+import React, { useState, useContext, useRef, useEffect, useLocation} from 'react';
 import { Form, Input, Button, Checkbox, message, Tabs, Card, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import 'antd/dist/reset.css';
-import axios from 'axios';
 import { AuthContext } from '../components/context';
+// import axios from 'axios';
+import axios from '../utils/axios';
 
 const { Title } = Typography;
 
 const LoginPage = () => {
+
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // const { login } = useAuth();
   const { login } = useContext(AuthContext);
@@ -22,8 +26,6 @@ const LoginPage = () => {
 
   const [countdown, setCountdown] = useState(0);
   const timerRef = useRef(null);
-
-  const navigate = useNavigate();
 
   // set 60s / 1000 ms = 1s
   useEffect(() => {
@@ -53,13 +55,14 @@ const LoginPage = () => {
             passwd: values.password,
         });
         // debugger;
-        if (response.status === 200 && response.data.status === 0 ) {
+        if (response.data.status === 0 ) {
             console.log('Login successful: ', response.data);
             // JSON.stringify / JSON.parse 
-
             login(response.data.data)
             message.success('登陆成功');
-            navigate("/dashboard"); // redirect to home
+            // ?. 安全防护 null 或 undefined 属性 避免通过if判断
+            const from = location.state?.from?.pathname || '/dashboard';
+            navigate(from); // redirect to home
         } else {
             // console.error('login failed', response.data);
             message.error('用户名或者密码错误');

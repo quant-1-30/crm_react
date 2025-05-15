@@ -1,26 +1,36 @@
-import React, { createContext, useState, useContext} from 'react';
+import React, { createContext, useState, useContext, useLocation, useEffect} from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 
 // 1. Create Auth Context
 export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const navigate = useNavigate();
 
+  const navigate = useNavigate();
   const api_url = process.env.REACT_APP_API_URL;
 
   const [token, setToken] = useState(() => {
-    // Initialize from localStorage or null
-    const stored = localStorage.getItem('token');
-    //return stored ? JSON.parse(stored) : null;
-    return stored ? stored : null;
+    try {
+      // Initialize from localStorage or null
+      const stored = localStorage.getItem('token');
+      // return stored ? stored : null;
+      return stored || null;
+    } catch (error) {
+      console.error('Token 获取失败', error);
+      message.error('登陆状态获取失败');
+      return null;
+    }
   });
 
   const login = (userToken) => {
-    // localStorage.setItem('token', JSON.stringify(userToken));
-    localStorage.setItem('token', userToken);
-    setToken(userToken);
-    navigate('/dashboard');
+    try {
+      localStorage.setItem('token', userToken);
+      setToken(userToken);
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Token 保存失败', error);
+      message.error('登陆状态保存失败');
+    }
   };
 
   const logout = () => {
@@ -63,8 +73,17 @@ export const LogoutButton = () => {
 export const ProtectedRoute = ({ children }) => {
   // const { token } = useAuth();
   const { token } = useContext(AuthContext);
+  // 获取当前路径
+  const location = useLocation();
+  useEffect(() => {
+    if (!token) {
+      console.log('No token found, redirecting to login');
+    }
+  }, [token]);
+
   if (!token) {
-    return <Navigate to="/login" replace />;
+    // redirect to login page and to the current path
+    return <Navigate to="/login" state={{ from: location }} replace/>;
   }
   return children;
 };

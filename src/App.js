@@ -15,7 +15,6 @@ import AppLayout from "./pages/Layout";
 // const { Header, Content } = Layout;
 
 function App() {
-
     return (
       <BrowserRouter>
         <AuthProvider>
