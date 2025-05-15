@@ -53,7 +53,7 @@ const LoginPage = () => {
         if (response.data.status === 0 ) {
             console.log('Login successful: ', response.data);
             // JSON.stringify / JSON.parse 
-            login(response.data.data)
+            login(response.data.data.token, response.data.data.name)
             message.success('登陆成功');
             // ?. 安全防护 null 或 undefined 属性 避免通过if判断
             const from = location.state?.from?.pathname || '/dashboard';

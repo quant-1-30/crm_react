@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { Layout, Menu, Button, theme } from 'antd';
+import { Layout, Menu, Button, theme, Space, Typography} from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../components/context';
 import {
@@ -10,12 +10,15 @@ import {
   LogoutOutlined
 } from '@ant-design/icons';
 
+
 const { Header, Content, Sider } = Layout;
+const { Text } = Typography;
+
 
 const AppLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useContext(AuthContext);
+  const { logout, userName } = useContext(AuthContext);
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
@@ -64,14 +67,17 @@ const AppLayout = ({ children }) => {
         <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
           CRM 系统
         </div>
-        <Button 
-          type="primary" 
-          danger 
-          icon={<LogoutOutlined />}
-          onClick={handleLogout}
-        >
-          退出登录
-        </Button>
+        <Space>
+            <Text strong>{userName}</Text>
+            <Button 
+              type="primary" 
+              danger 
+              icon={<LogoutOutlined />}
+              onClick={handleLogout}
+            >
+              退出登录
+            </Button>
+        </Space>
       </Header>
       <Layout>
         <Sider width={200} style={{ background: colorBgContainer }}>

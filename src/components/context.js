@@ -15,16 +15,27 @@ export const AuthProvider = ({ children }) => {
       // return stored ? stored : null;
       return stored || null;
     } catch (error) {
-      console.error('Token 获取失败', error);
+      console.error('Token获取失败', error);
       message.error('登陆状态获取失败');
       return null;
     }
   });
 
-  const login = (userToken) => {
+  const [userName, setUserName] = useState(() => {
+    try {
+      const stored = localStorage.getItem('userName');
+      return stored || null;
+    } catch (error) {
+      console.error('用户名获取失败', error);
+    }
+  });
+
+  const login = (userToken, userName) => {
     try {
       localStorage.setItem('token', userToken);
+      localStorage.setItem('userName', userName);
       setToken(userToken);
+      setUserName(userName);
       navigate('/dashboard');
     } catch (error) {
       console.error('Token 保存失败', error);
@@ -39,7 +50,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ token, login, logout }}>
+    <AuthContext.Provider value={{ token, userName, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
