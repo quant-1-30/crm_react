@@ -1,29 +1,17 @@
 // src/pages/WelcomePage.js
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Statistic, Table, DatePicker, message} from 'antd';
 import { 
   UserOutlined, 
   TeamOutlined, 
   DollarOutlined, 
   ShoppingCartOutlined,
-  ArrowUpOutlined,
-  ArrowDownOutlined
 } from '@ant-design/icons';
-import { AuthContext } from '../components/context';
 // import axios from 'axios';
 import axios from '../utils/axios';
 
 
 const Dashboard = () => {
-
-  const { api_url } = useContext(AuthContext);
-  const dashboard_url = `${api_url}/dashboard`;
-
-  // const { token} = useContext(AuthContext);
-  // const header = {
-  //   'Content-Type': 'application/json',
-  //   'Authorization':  `Bearer ${token}`
-  // };
 
   const { RangePicker } = DatePicker;
   const [loading, setLoading] = useState(true);
@@ -50,18 +38,6 @@ const Dashboard = () => {
     console.log("handlePageChange filters ", filters);
     console.log("handlePageChange sorter ", sorter);
  
-    // // 处理排序
-    // let sortedData = [...chargeRecord]; // 创建数据副本
-    // if (sorter.field && sorter.order) {
-    //   sortedData.sort((a, b) => {
-    //     const field = sorter.field;
-    //     const order = sorter.order;
-        
-    //     if (order === 'ascend') {
-    //       return a[field] > b[field] ? 1 : -1;
-    //     } else {
-    //       return a[field] < b[field] ? 1 : -1;
-    //     }
     setPagination({
       ...pagination,
       total: pagination.total
@@ -70,12 +46,6 @@ const Dashboard = () => {
 
 
   useEffect(() => {
-    // // Redirect to dashboard if user is authenticated (token is present)
-    // useEffect(() => {
-    //     if (token) {
-    //       navigate('/dashboard');
-    //     }
-    //   }, [token, navigate]);
     fetchDashboardData();
   }, [dateRange]);
 
@@ -84,11 +54,7 @@ const Dashboard = () => {
     try {
       setLoading(true);
       // 获取统计数据
-      const statsResponse = await axios.get(`${dashboard_url}/snapshot`, 
-      // {
-      //   headers: header,
-      //   withCredentials: true
-      // }
+      const statsResponse = await axios.get('/dashboard/snapshot', 
     );
       console.log("statsResponse.data", statsResponse.data.status);
       // debugger;
@@ -99,14 +65,12 @@ const Dashboard = () => {
       }
 
       // 获取最近活动
-      const activitiesResponse = await axios.get(`${dashboard_url}/activity`, 
+      const activitiesResponse = await axios.get('/dashboard/activity', 
         {
           params: {
             startDate: dateRange?.[0]?.format('YYYY-MM-DD'),
             endDate: dateRange?.[1]?.format('YYYY-MM-DD')
           },
-          // headers: header,
-          // withCredentials: true
         });
       console.log("activitiesResponse.data", activitiesResponse.data);
       if (activitiesResponse.data.status === 0) {

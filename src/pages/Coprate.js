@@ -1,10 +1,9 @@
 // src/pages/AgreementUnits.js
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input, Table, message, Button, Select, Card, Row, Col, Space, Typography } from 'antd';
 
 import 'antd/dist/reset.css';
 import FileUploader from '../components/upload';
-import { AuthContext } from '../components/context';
 // import { tr } from 'date-fns/locale';
 // import axios from 'axios';
 import axios from '../utils/axios';
@@ -32,24 +31,12 @@ const styles = {
 
 const CoporateManager = () => {
 
-  // context and const
-  const { api_url } = useContext(AuthContext);
-  const coporateUrl = `${api_url}/coporate`;
-  const uploadUrl = `${api_url}/component/upload`;
-
   // pagination
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 5,
     total: 0
   });
-
-  // // header
-  // const { token } = useContext(AuthContext);
-  // const header = {
-  //   'Content-Type': 'application/json',
-  //   'Authorization':  `Bearer ${token}`
-  // };
 
   const [units, setUnits] = useState([]);
   const [filteredUnits, setFilteredUnits] = useState([]);
@@ -66,12 +53,8 @@ const CoporateManager = () => {
     const fetchUnits = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`${coporateUrl}/list`,
-          // {
-          //   headers: header,
-          //   withCredentials: true
-          // },
-        );
+        const response = await axios.get('/coporate/list');
+
         if (response.data.status === 0) {
           console.log("response ", response.data.data);
           setUnits(response.data.data);
@@ -98,18 +81,6 @@ const CoporateManager = () => {
     console.log("handlePageChange filters ", filters);
     console.log("handlePageChange sorter ", sorter);
  
-    // // 处理排序
-    // let sortedData = [...chargeRecord]; // 创建数据副本
-    // if (sorter.field && sorter.order) {
-    //   sortedData.sort((a, b) => {
-    //     const field = sorter.field;
-    //     const order = sorter.order;
-        
-    //     if (order === 'ascend') {
-    //       return a[field] > b[field] ? 1 : -1;
-    //     } else {
-    //       return a[field] < b[field] ? 1 : -1;
-    //     }
     setPagination({
       ...pagination,
       total: pagination.total
@@ -117,14 +88,11 @@ const CoporateManager = () => {
   };
 
   const handleChange = (value) => {
-    // value to table
     const table = value === '协议单位' ? 'coporate' : 'coporate_info';
     setSelectedValue(table);
   };
 
-  // input 
   const handleSearch = async () => {
-   
       const index = units.findIndex(unit =>
         // unit.name.toLowerCase().includes(coporateName));
         // unit.name.includes(coporateName));
@@ -138,13 +106,11 @@ const CoporateManager = () => {
         console.log("handleSearch ", units[index]);
   
         try {
-          const response = await axios.get(`${coporateUrl}/detail`,
+          const response = await axios.get('/coporate/detail',
             {
               params: {
                 name: units[index].name
               },
-              // headers: header,
-              // withCredentials: true
             },
           );
           if (response.data.data) {
@@ -174,10 +140,8 @@ const CoporateManager = () => {
   };
 
   const processInput = (value) => {
-    // Remove leading and trailing spaces
     // processed = processed.replace(/['"]/g, ''); // Remove quotes if you don't want them
     let processed = value.trim();
-    
     return processed;
   };
 
@@ -292,7 +256,7 @@ const CoporateManager = () => {
               </Space>
 
               <FileUploader
-                uploadUrl={uploadUrl}
+                // uploadUrl={uploadUrl}
                 table={selectedValue}
                 onUploadSuccess={onUpload}
               />

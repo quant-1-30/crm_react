@@ -1,9 +1,8 @@
 // src/pages/MembershipManager.js
-import React, { useState, useEffect, useContext} from 'react';
+import React, { useState, useEffect} from 'react';
 import { Input, Button, message, Modal, Form, Tabs, Table} from 'antd';
 import 'antd/dist/reset.css';
 import FileUploader from '../components/upload';
-import { AuthContext } from '../components/context';
 // import axios from 'axios';
 import axios from '../utils/axios';
 
@@ -28,7 +27,6 @@ const styles = {
     marginTop: '40px',     // 表单上方间距
   }
 };
-
 
 const MembershipManager = () => {
   // 表单
@@ -64,17 +62,6 @@ const MembershipManager = () => {
     pageSize: 5,
     total: 0
   });
-
-  const { api_url } = useContext(AuthContext);
-  const membershipUrl = `${api_url}/membership`;
-  const uploadUrl = `${api_url}/component/upload`;
-  
-  // const { token} = useContext(AuthContext);
-  // const header = {
-  //   'Content-Type': 'application/json',
-  //   'Authorization':  `Bearer ${token}`
-  // };
-
 
   const onFinishFailed = (errorInfo) => {
     console.log('Failed:', errorInfo);
@@ -114,11 +101,7 @@ const MembershipManager = () => {
   const fetchUnits = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`${membershipUrl}/list`,
-          // {
-          //   headers: header,
-          //   withCredentials: true
-          // },
+        const response = await axios.get('/membership/list',
         );
         console.log("fetchUnits data ", response.data.data)
         setMembers(response.data.data);
@@ -313,17 +296,13 @@ const MembershipManager = () => {
       try {
         if (modalType === 'update') {
             setMemberInfo(values.phone);
-            const createResponse = await axios.post(`${membershipUrl}/on_update`, 
+            const createResponse = await axios.post('/membership/on_update', 
             {
               member_id: filterMemberInfo[0].member_id,
               name: values.name,
               phone: values.phone,
               birth: values.birth,
             },
-            // {
-            //   headers: header,
-            //   withCredentials: true
-            // },
           );
             if (createResponse.status === 200 && createResponse.data.status === 0) {
               message.success('会员信息更新成功');
@@ -337,16 +316,12 @@ const MembershipManager = () => {
         } 
         else if (modalType === 'register') {
             // const formData = registerForm.getFieldsValue();
-            const createResponse = await axios.post(`${membershipUrl}/on_register`, 
+            const createResponse = await axios.post('/membership/on_register', 
             {
               name: values.name,
               phone: values.phone,
               birth: values.birth,
             },
-            // {
-            //   headers: header,
-            //   withCredentials: true
-            // },
           );
             if (createResponse.status === 200 && createResponse.data.status === 0) {
               message.success('会员创建成功');
@@ -381,7 +356,6 @@ const MembershipManager = () => {
 
     const handleConsume = async (values) => {
 
-        // const formData = consumeForm.getFieldsValue();
         setLoading(true);
         console.log("formData ", values);
         if (values.charge < 0 || values.consume < 0 || values.discount < 0) {
@@ -401,17 +375,13 @@ const MembershipManager = () => {
         }
 
         try {
-            const consume_resp = await axios.post(`${membershipUrl}/on_consume`, 
+            const consume_resp = await axios.post('/membership/on_consume', 
                 {
                   "member_id": members[index].member_id,
                   "charge": parseInt(values.charge),
                   "discount": parseInt(values.discount),
                   "consume": parseInt(values.consume),
                 },
-              // {
-              //   headers: header,
-              //   withCredentials: true
-              // },
               );
   
             if (consume_resp.status === 200 && consume_resp.data.status === 0) {
@@ -432,7 +402,6 @@ const MembershipManager = () => {
       // debugger;
 
       try {
-        
         const index = members.findIndex(member => {
             // lowercase
             const memberName = String(member.name || '').toLowerCase();
@@ -443,14 +412,11 @@ const MembershipManager = () => {
 
         console.log("handleSearch index ", index);
         if (index !== -1){
-          
-          const charge_resp = await axios.get(`${membershipUrl}/charge_detail`,
+          const charge_resp = await axios.get('/membership/charge_detail',
             { 
               params: {
                 member_id: members[index].member_id
               },
-              // headers: header,
-              // withCredentials: true
             },
           );
           const charge_records = charge_resp.data.data;
@@ -462,13 +428,11 @@ const MembershipManager = () => {
           }));
 
           // consume_detail
-          const consume_resp = await axios.get(`${membershipUrl}/consume_detail`,
+          const consume_resp = await axios.get('/membership/consume_detail',
             { 
               params: {
                 member_id: members[index].member_id
               },
-              // headers: header,
-              // withCredentials: true
             },
           );
           const consume_records = consume_resp.data.data;
@@ -548,11 +512,11 @@ const MembershipManager = () => {
       title: "时间",
       dataIndex: "created_at",
       key: "created_at",
-    //   // small by front and large by backend
-    //   sorter: (a, b) => {
-    //     return new Date(a.created_at) - new Date(b.created_at);
-    //   },
-    //   sortDirections: ['descend', 'ascend'],
+    //// small by front and large by backend
+    //sorter: (a, b) => {
+    //  return new Date(a.created_at) - new Date(b.created_at);
+    //},
+    //sortDirections: ['descend', 'ascend'],
     // 
       },
     {
@@ -626,8 +590,7 @@ const MembershipManager = () => {
             columns={member_columns}
             dataSource={filterMemberInfo}
             rowKey={(record) => record.name}
-            // loading={loading}
-            // pagination={ {pagesize: 10, current: 1}}
+            loading={loading}
             pagination = {false}
             // key={(record) => record.member_id}
             style={{ width: '100%', borderCollapse: 'collapse' }}
@@ -767,7 +730,6 @@ const MembershipManager = () => {
         <div style={styles.tabContent}>
           <div style={styles.searchSection}>
               <FileUploader
-                uploadUrl={uploadUrl}
                 table="membership"
                 onUploadSuccess={onUpload}
               />

@@ -1,18 +1,15 @@
-import React, {useState, useContext} from 'react';
+import React, {useState} from 'react';
 import { Upload, Button, message } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 // import axios from 'axios';
 import axios from '../utils/axios';
 
 
-const FileUploader = ({uploadUrl, table, onUploadSuccess}) => {
-  console.log("uploading to uploadUrl and table:", uploadUrl, table);
+const FileUploader = ({table, onUploadSuccess}) => {
+  console.log("uploading to table:", table);
 
-  // replace default Content-Type in utils/axios.js
-  // const { token } = useContext(AuthContext);
   const headers = {
     'Content-Type': "multipart/form-data",
-    // 'Authorization':  `Bearer ${token}`
   };
 
   const [fileList, setFileList] = useState([]);
@@ -22,6 +19,7 @@ const FileUploader = ({uploadUrl, table, onUploadSuccess}) => {
       setFileList(prevFileList => {
         const index = prevFileList.indexOf(file);
         const newFileList = prevFileList.slice();
+        // remove file startIndex, deleteCount
         newFileList.splice(index, 1);
         return newFileList;
       });
@@ -47,11 +45,10 @@ const FileUploader = ({uploadUrl, table, onUploadSuccess}) => {
 
 
     try {
-      const response = await axios.post(uploadUrl, 
+      const response = await axios.post('/component/upload', 
         formData, 
       {
         headers: headers,
-        // withCredentials: true
       },
     );
     console.log("upload response ", response.data);
@@ -81,12 +78,7 @@ const FileUploader = ({uploadUrl, table, onUploadSuccess}) => {
       </Button>
     </div>
   )
-  // return (
-  //   <div>
-  //     <input type="file" />
-  //     <button onClick={handleUpload}>Upload</button>
-  //   </div>
-  // );
+
 };
 
 export default FileUploader;

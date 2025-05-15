@@ -1,9 +1,8 @@
-import React, {useState, useContext} from 'react';
+import React, {useState} from 'react';
 import { message, DatePicker, Select, Button, Typography, Row, Col, Card, Space} from 'antd';
 import { Histogram } from '../components/chart';
 import 'antd/dist/reset.css';
 import { CalendarOutlined, BarChartOutlined, ReloadOutlined } from '@ant-design/icons';
-import { AuthContext } from '../components/context';
 // import axios from 'axios';
 import axios from '../utils/axios';
 
@@ -35,16 +34,6 @@ const styles = {
 
 const DisplayChart = () => {
 
-  const { api_url } = useContext(AuthContext);
-  const analyze_url = `${api_url}/analyzer`;
-
-  // const { token } = useContext(AuthContext);
-  // const cors = {withCredential: true};
-  // const header = {
-  //   'Content-Type': 'application/json',
-  //   'Authorization':  `Bearer ${token}`
-  // };
-
   const [dateRange, setDateRange] = useState([]);
 
   const [selectedValue, setSelectedValue]  = useState( []);
@@ -61,18 +50,13 @@ const DisplayChart = () => {
     
     setLoading(true);
     try {
-      const response = await axios.post(`${analyze_url}/stats`,
+      const response = await axios.post('/analyzer/stats',
         {
-          // start_date: Math.floor(dateRange[0].valueOf() / 1000),
-          // end_date: Math.floor(dateRange[1].valueOf() / 1000),
+          // start_date: Math.floor(dateRange[0].valueOf() / 1000), // timestamp
           startDate: dateRange?.[0]?.format('YYYY-MM-DD'),
           endDate: dateRange?.[1]?.format('YYYY-MM-DD'),
           frequency: selectedValue
         },
-        // {
-        //   headers: header,
-        //   withCredentials: true
-        // },
       );
       if (response.data.status === 0) {
         console.log("response ", response.data.data);

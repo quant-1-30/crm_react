@@ -1,5 +1,6 @@
-import React, { createContext, useState, useContext, useLocation, useEffect} from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import React, { createContext, useState, useContext, useEffect} from 'react';
+import { useNavigate, Navigate, useLocation} from 'react-router-dom';
+import { message } from 'antd';
 
 // 1. Create Auth Context
 export const AuthContext = createContext(null);
@@ -7,11 +8,9 @@ export const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
 
   const navigate = useNavigate();
-  const api_url = process.env.REACT_APP_API_URL;
 
   const [token, setToken] = useState(() => {
     try {
-      // Initialize from localStorage or null
       const stored = localStorage.getItem('token');
       // return stored ? stored : null;
       return stored || null;
@@ -40,25 +39,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ api_url, token, login, logout }}>
+    <AuthContext.Provider value={{ token, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// 2. Custom hook for consuming auth context
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
-};
-
 // 3. Logout Button Component
 export const LogoutButton = () => {
-  // const { logout } = useContext(AuthContext);
-  const { logout } = useAuth();
+  const { logout } = useContext(AuthContext);
   return (
     <button
       onClick={logout}
@@ -71,10 +60,10 @@ export const LogoutButton = () => {
 
 // 4. ProtectedRoute Component
 export const ProtectedRoute = ({ children }) => {
-  // const { token } = useAuth();
   const { token } = useContext(AuthContext);
   // 获取当前路径
   const location = useLocation();
+
   useEffect(() => {
     if (!token) {
       console.log('No token found, redirecting to login');
@@ -87,3 +76,12 @@ export const ProtectedRoute = ({ children }) => {
   }
   return children;
 };
+
+// // 2. Custom hook for consuming auth context
+// export const useAuth = () => {
+//   const context = useContext(AuthContext);
+//   if (!context) {
+//     throw new Error('useAuth must be used within AuthProvider');
+//   }
+//   return context;
+// };

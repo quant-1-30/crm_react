@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // 创建 axios 实例
 const instance = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || '/api',  // 你的后端 API 地址
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8100',  // 你的后端 API 地址
 
   timeout: 5000,
 
@@ -45,12 +45,12 @@ instance.interceptors.response.use(
         case 403:
           // 403 无权限
           console.error('403 无权限');
-          window.location.href = '/403';
+        //   window.location.href = '/403';
           break;
         case 404:
           // 404 未找到
           console.error('404 未找到');
-          window.location.href = '/404';
+        //   window.location.href = '/404';
           break;
         default:
           console.error('请求错误');

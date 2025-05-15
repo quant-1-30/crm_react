@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Layout, Menu, Button, theme } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../components/context';
+import { AuthContext } from '../components/context';
 import {
   DashboardOutlined,
   UserOutlined,
@@ -15,7 +15,7 @@ const { Header, Content, Sider } = Layout;
 const AppLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout } = useContext(AuthContext);
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();

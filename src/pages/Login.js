@@ -1,6 +1,6 @@
-import React, { useState, useContext, useRef, useEffect, useLocation} from 'react';
+import React, { useState, useContext, useRef, useEffect} from 'react';
 import { Form, Input, Button, Checkbox, message, Tabs, Card, Typography } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation} from 'react-router-dom';
 import 'antd/dist/reset.css';
 import { AuthContext } from '../components/context';
 // import axios from 'axios';
@@ -13,12 +13,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // const { login } = useAuth();
   const { login } = useContext(AuthContext);
-  const { api_url } = useContext(AuthContext);
-
-  const smsUrl = `${api_url}/component`;
-  const homeUrl = `${api_url}/home`;
 
   const [activeTab, setActiveTab] = useState('login');
   const [isSendingCode, setIsSendingCode] = useState(false);
@@ -27,8 +22,8 @@ const LoginPage = () => {
   const [countdown, setCountdown] = useState(0);
   const timerRef = useRef(null);
 
-  // set 60s / 1000 ms = 1s
   useEffect(() => {
+    // set 60s / 1000 ms = 1s
     // 当 countdown 从 1 开始，启动定时器
     if (countdown > 0) {
       timerRef.current = setInterval(() => {
@@ -49,7 +44,7 @@ const LoginPage = () => {
     console.log('Success:', values);
     // backend
     try {
-        const response = await axios.post(`${homeUrl}/on_login`, 
+        const response = await axios.post('/home/on_login', 
         {
             name: values.username,
             passwd: values.password,
@@ -63,6 +58,7 @@ const LoginPage = () => {
             // ?. 安全防护 null 或 undefined 属性 避免通过if判断
             const from = location.state?.from?.pathname || '/dashboard';
             navigate(from); // redirect to home
+            // navigate("/dashboard"); // redirect to home
         } else {
             // console.error('login failed', response.data);
             message.error('用户名或者密码错误');
@@ -86,7 +82,7 @@ const LoginPage = () => {
     setIsSendingCode(true);
     // debugger;
     try {
-        const response = await axios.post(`${smsUrl}/on_sms`,
+        const response = await axios.post('/component/on_sms',
             {"phone": phone}
         );
         console.log("send sms ", response)
@@ -105,7 +101,7 @@ const LoginPage = () => {
 
   const onRegister = async (values) => {
     try {
-        const response = await axios.post(`${homeUrl}/on_register`,
+        const response = await axios.post('/home/on_register',
             {name: values.username,
              passwd: values.password,
              phone: values.phone,
@@ -126,7 +122,7 @@ const LoginPage = () => {
   
   const onReset = async (values) => {
     try {
-        const response = await axios.post(`${homeUrl}/on_reset`,
+        const response = await axios.post('/home/on_reset',
             {
              passwd: values.password,
              phone: values.phone,
